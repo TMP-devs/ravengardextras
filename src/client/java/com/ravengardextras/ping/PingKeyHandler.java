@@ -12,6 +12,11 @@ import net.minecraft.world.phys.HitResult;
 
 /** Turns a ping-key press into a local ping plus a party chat broadcast. */
 public final class PingKeyHandler {
+	/** Minimum gap between pings, so key spam can't flood party chat and trip server spam limits. */
+	private static final long COOLDOWN_MILLIS = 2000;
+
+	private static long lastPingMillis;
+
 	private PingKeyHandler() {
 	}
 
@@ -25,12 +30,19 @@ public final class PingKeyHandler {
 			return;
 		}
 
+		long now = System.currentTimeMillis();
+		if (now - lastPingMillis < COOLDOWN_MILLIS) {
+			client.gui.hud.setOverlayMessage(Component.literal("Ping on cooldown"), false);
+			return;
+		}
+
 		HitResult hit = player.pick(config.maxPingDistance, 1.0F, false);
 		if (!(hit instanceof BlockHitResult blockHit) || hit.getType() != HitResult.Type.BLOCK) {
 			client.gui.hud.setOverlayMessage(Component.literal("No block in ping range"), false);
 			return;
 		}
 
+		lastPingMillis = now;
 		BlockPos pos = blockHit.getBlockPos();
 		PingManager.add(player.getName().getString(), pos);
 

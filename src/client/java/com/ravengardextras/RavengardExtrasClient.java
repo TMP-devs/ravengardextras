@@ -19,6 +19,7 @@ public class RavengardExtrasClient implements ClientModInitializer {
 	public static PingConfig PING_CONFIG;
 	private static KeyMapping openMenuKey;
 	private static KeyMapping pingKey;
+	private static KeyMapping markKey;
 	private static volatile boolean menuOpenRequested = false;
 
 	@Override
@@ -30,6 +31,8 @@ public class RavengardExtrasClient implements ClientModInitializer {
 				new KeyMapping("key.ravengardextras.open_menu", InputConstants.UNKNOWN.getValue(), KeyMapping.Category.MISC));
 		pingKey = KeyMappingHelper.registerKeyMapping(
 				new KeyMapping("key.ravengardextras.ping", InputConstants.KEY_Z, KeyMapping.Category.MISC));
+		markKey = KeyMappingHelper.registerKeyMapping(
+				new KeyMapping("key.ravengardextras.mark", InputConstants.KEY_X, KeyMapping.Category.MISC));
 
 		PingChatListener.register();
 		PingRenderer.register();
@@ -40,6 +43,9 @@ public class RavengardExtrasClient implements ClientModInitializer {
 			}
 			while (pingKey.consumeClick()) {
 				PingKeyHandler.onPingKey(client);
+			}
+			while (markKey.consumeClick()) {
+				PingKeyHandler.onMarkKey(client);
 			}
 			// Deferred to end-of-tick so a chat screen's own close (which happens
 			// right after a command is sent) can never race with and undo this.
@@ -62,5 +68,10 @@ public class RavengardExtrasClient implements ClientModInitializer {
 	/** Current display name of the ping key (tracks rebinds), e.g. "Z". */
 	public static String pingKeyName() {
 		return pingKey != null ? pingKey.getTranslatedKeyMessage().getString() : "?";
+	}
+
+	/** Current display name of the mark key (tracks rebinds), e.g. "X". */
+	public static String markKeyName() {
+		return markKey != null ? markKey.getTranslatedKeyMessage().getString() : "?";
 	}
 }

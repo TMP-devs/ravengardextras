@@ -45,7 +45,7 @@ public class RavengardExtrasMenuScreen extends Screen {
 		rowY += 44;
 
 		this.addRenderableWidget(new FeatureButton(px + 12, rowY, PANEL_WIDTH - 24, 36,
-				"Party Ping", "Ping blocks for your party (" + RavengardExtrasClient.pingKeyName() + ")",
+				"Party Ping", "Ping (" + RavengardExtrasClient.pingKeyName() + ") / mark loot (" + RavengardExtrasClient.markKeyName() + ")",
 				new ItemStack(Items.ENDER_EYE),
 				() -> RavengardExtrasClient.PING_CONFIG.enabled,
 				() -> Minecraft.getInstance().gui.setScreen(new PingScreen(this, RavengardExtrasClient.PING_CONFIG))));

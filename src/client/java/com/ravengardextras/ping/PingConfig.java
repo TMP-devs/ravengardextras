@@ -19,7 +19,8 @@ public class PingConfig {
 	public boolean enabled = true;
 	/** Chat command (no slash) the ping is sent through, e.g. "pc" -> "/pc RGE-PING @ x, y, z". Blank = local-only ping. */
 	public String partyCommand = "pc";
-	public int pingDurationSeconds = 60;
+	/** How long a temporary ping stays up. Permanent marks never expire. */
+	public int tempPingSeconds = 10;
 	public int maxPingDistance = 160;
 
 	public static PingConfig load() {
@@ -61,7 +62,7 @@ public class PingConfig {
 		if (partyCommand.startsWith("/")) {
 			partyCommand = partyCommand.substring(1);
 		}
-		pingDurationSeconds = Math.max(5, Math.min(600, pingDurationSeconds));
+		tempPingSeconds = Math.max(3, Math.min(600, tempPingSeconds));
 		maxPingDistance = Math.max(8, Math.min(512, maxPingDistance));
 	}
 }

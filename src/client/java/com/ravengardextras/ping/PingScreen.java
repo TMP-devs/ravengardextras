@@ -46,8 +46,8 @@ public class PingScreen extends Screen {
 		rowY += gap + 12;
 
 		this.durationBox = new EditBox(this.font, centerX - 75, rowY + 12, 150, 20,
-				Component.literal("Ping duration (seconds)"));
-		this.durationBox.setValue(Integer.toString(this.config.pingDurationSeconds));
+				Component.literal("Temporary ping duration (seconds)"));
+		this.durationBox.setValue(Integer.toString(this.config.tempPingSeconds));
 		this.addRenderableWidget(this.durationBox);
 		rowY += gap + 18;
 
@@ -67,7 +67,7 @@ public class PingScreen extends Screen {
 		}
 
 		this.config.partyCommand = this.commandBox.getValue();
-		this.config.pingDurationSeconds = duration;
+		this.config.tempPingSeconds = duration;
 		this.config.save();
 		this.onClose();
 	}
@@ -80,7 +80,7 @@ public class PingScreen extends Screen {
 
 		graphics.text(this.font, "Party chat command (blank = show only to yourself)",
 				centerX - 75, this.commandBox.getY() - 12, 0xAAAAAA);
-		graphics.text(this.font, "Ping duration in seconds",
+		graphics.text(this.font, "Temp ping duration (marks never expire)",
 				centerX - 75, this.durationBox.getY() - 12, 0xAAAAAA);
 
 		Minecraft minecraft = Minecraft.getInstance();

@@ -42,7 +42,7 @@ public final class PingRenderer {
 			return;
 		}
 		long now = System.currentTimeMillis();
-		long duration = config.pingDurationSeconds * 1000L;
+		long duration = config.tempPingSeconds * 1000L;
 		List<PingManager.Ping> pings = PingManager.active(now, duration);
 		if (pings.isEmpty()) {
 			return;
@@ -59,12 +59,14 @@ public final class PingRenderer {
 			double distance = Math.sqrt(x * x + y * y + z * z);
 
 			float scale = Mth.clamp((float) distance * SCALE_PER_BLOCK, 0.25F, 12.0F);
-			long remaining = duration - (now - ping.createdAtMillis());
-			if (remaining < FADE_MILLIS) {
-				scale *= remaining / (float) FADE_MILLIS;
-			}
-			if (scale <= 0.0F) {
-				continue;
+			if (!ping.permanent()) {
+				long remaining = duration - (now - ping.createdAtMillis());
+				if (remaining < FADE_MILLIS) {
+					scale *= remaining / (float) FADE_MILLIS;
+				}
+				if (scale <= 0.0F) {
+					continue;
+				}
 			}
 
 			int color = PingColors.colorFor(ping.sender());
@@ -89,14 +91,15 @@ public final class PingRenderer {
 
 			poseStack.scale(scale, scale, scale);
 			poseStack.mulPose(camera.orientation);
+			boolean permanent = ping.permanent();
 			context.submitNodeCollector().submitCustomGeometry(
 					poseStack, RenderTypes.textBackgroundSeeThrough(),
-					(pose, buffer) -> drawDiamond(pose, buffer, color));
+					(pose, buffer) -> drawDiamond(pose, buffer, color, permanent));
 			poseStack.popPose();
 		}
 	}
 
-	private static void drawDiamond(PoseStack.Pose pose, VertexConsumer buffer, int color) {
+	private static void drawDiamond(PoseStack.Pose pose, VertexConsumer buffer, int color, boolean permanent) {
 		int fill = (color & 0x00FFFFFF) | 0xB0000000;
 
 		// Center fill, both windings so it can't be culled away.
@@ -104,6 +107,14 @@ public final class PingRenderer {
 				0.0F, HALF_HEIGHT, HALF_WIDTH, 0.0F, 0.0F, -HALF_HEIGHT, -HALF_WIDTH, 0.0F);
 		quad(pose, buffer, fill,
 				-HALF_WIDTH, 0.0F, 0.0F, -HALF_HEIGHT, HALF_WIDTH, 0.0F, 0.0F, HALF_HEIGHT);
+
+		// Permanent marks get a white core so they read differently from pings.
+		if (permanent) {
+			float cw = HALF_WIDTH * 0.35F;
+			float ch = HALF_HEIGHT * 0.35F;
+			quad(pose, buffer, 0xFFFFFFFF, 0.0F, ch, cw, 0.0F, 0.0F, -ch, -cw, 0.0F);
+			quad(pose, buffer, 0xFFFFFFFF, -cw, 0.0F, 0.0F, -ch, cw, 0.0F, 0.0F, ch);
+		}
 
 		// Solid rim: a slightly larger diamond ring built from four edge quads.
 		float ow = HALF_WIDTH + EDGE;

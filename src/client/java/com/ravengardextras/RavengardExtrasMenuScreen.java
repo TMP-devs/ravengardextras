@@ -80,9 +80,11 @@ public class RavengardExtrasMenuScreen extends Screen {
 
 	private void drawCredit(GuiGraphicsExtractor graphics, int px, int py, int x1, int y1) {
 		String prefix = "a mod by ";
-		String name = "chrrisk";
+		String name1 = "chrrisk";
+		String separator = " & ";
+		String name2 = "scrolls";
 		float scale = 0.65F;
-		int fullWidth = this.font.width(prefix) + this.font.width(name);
+		int fullWidth = this.font.width(prefix) + this.font.width(name1) + this.font.width(separator) + this.font.width(name2);
 		int scaledWidth = (int) (fullWidth * scale);
 		int drawX = px + (x1 - px) / 2 - scaledWidth / 2;
 		int drawY = y1 - 12;
@@ -94,15 +96,27 @@ public class RavengardExtrasMenuScreen extends Screen {
 		graphics.text(this.font, prefix, 0, 0, 0x77FFFFFF);
 		int cursorX = this.font.width(prefix);
 		long time = System.currentTimeMillis();
-		for (int i = 0; i < name.length(); i++) {
-			float hue = ((time / 4L + i * 60L) % 1000L) / 1000.0F;
-			int letterColor = 0xFF000000 | Mth.hsvToRgb(hue, 1.0F, 1.0F);
-			String letter = String.valueOf(name.charAt(i));
-			graphics.text(this.font, letter, cursorX, 0, letterColor);
-			cursorX += this.font.width(letter);
+		int rainbowIndex = 0;
+		for (int i = 0; i < name1.length(); i++) {
+			cursorX = drawRainbowLetter(graphics, name1.charAt(i), cursorX, time, rainbowIndex++);
+		}
+
+		graphics.text(this.font, separator, cursorX, 0, 0x77FFFFFF);
+		cursorX += this.font.width(separator);
+
+		for (int i = 0; i < name2.length(); i++) {
+			cursorX = drawRainbowLetter(graphics, name2.charAt(i), cursorX, time, rainbowIndex++);
 		}
 
 		graphics.pose().popMatrix();
+	}
+
+	private int drawRainbowLetter(GuiGraphicsExtractor graphics, char c, int cursorX, long time, int rainbowIndex) {
+		float hue = ((time / 4L + rainbowIndex * 60L) % 1000L) / 1000.0F;
+		int letterColor = 0xFF000000 | Mth.hsvToRgb(hue, 1.0F, 1.0F);
+		String letter = String.valueOf(c);
+		graphics.text(this.font, letter, cursorX, 0, letterColor);
+		return cursorX + this.font.width(letter);
 	}
 
 	@Override

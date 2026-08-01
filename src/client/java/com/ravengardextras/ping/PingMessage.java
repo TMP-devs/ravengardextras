@@ -35,6 +35,9 @@ public final class PingMessage {
 		if (plainChatLine == null) {
 			return null;
 		}
+		// Servers embed legacy formatting codes in the text ("Scrolls§f: ..."); strip
+		// them or the code letter next to the separator gets mistaken for the sender.
+		plainChatLine = plainChatLine.replaceAll("§.", "");
 		Matcher coords = COORDS.matcher(plainChatLine);
 		if (!coords.find()) {
 			return null;

@@ -87,18 +87,23 @@ public final class PingRenderer {
 
 			poseStack.pushPose();
 			poseStack.translate(x, y, z);
-			poseStack.scale(scale, scale, scale);
 
 			// Label below the diamond. submitNameTag applies the camera billboard and its
 			// own 0.025 text scale internally, so it gets the pose *before* our billboard
-			// rotation; our uniform scale stays on the pose so the label keeps pace with
-			// the diamond. The attachment y compensates submitNameTag's +0.5 offset.
+			// rotation. It uses its own scale, clamped so the text never drops below
+			// normal nametag size up close (the diamond's scale shrinks toward zero).
+			// The attachment y compensates submitNameTag's +0.5 offset.
+			float labelScale = Math.max(1.0F, scale);
 			Component label = Component.literal(ping.sender() + " (" + Math.round(distance) + "m)")
 					.withColor(color & 0xFFFFFF);
+			poseStack.pushPose();
+			poseStack.scale(labelScale, labelScale, labelScale);
 			context.submitNodeCollector().submitNameTag(
-					poseStack, new Vec3(0.0, -HALF_HEIGHT - 0.75, 0.0), 0, label,
+					poseStack, new Vec3(0.0, -(HALF_HEIGHT * scale) / labelScale - 0.8, 0.0), 0, label,
 					true, LightCoordsUtil.FULL_BRIGHT, camera);
+			poseStack.popPose();
 
+			poseStack.scale(scale, scale, scale);
 			poseStack.mulPose(camera.orientation);
 			context.submitNodeCollector().submitCustomGeometry(
 					poseStack, RenderTypes.textBackgroundSeeThrough(),

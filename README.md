@@ -16,6 +16,16 @@ Outlines item slots in any inventory GUI based on their "Crowns" value.
 - Ten preset colors plus an animated rainbow option
 - Full in-game GUI, no config file editing required
 
+### Party Ping
+
+League-style pings for your party. Press `Z` (rebindable in Controls) to ping the block you're looking at.
+
+- A diamond marker appears on the block, visible **through walls**, with the pinger's name and live distance
+- Broadcast through party chat as plain coordinates (`RGE-PING @ x, y, z`), so it works on any server — party members with the mod see the diamond, everyone else still gets the coords
+- Each player gets a stable color derived from their name, the same on every teammate's screen
+- One ping per player: ping again to move it; pings expire after a configurable duration (default 60s)
+- The party chat command is configurable (default `/pc`); leave it blank to keep pings to yourself
+
 ## Requirements
 
 - Minecraft 26.2

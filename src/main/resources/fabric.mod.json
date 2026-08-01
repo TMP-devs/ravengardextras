@@ -3,7 +3,7 @@
 	"id": "ravengardextras",
 	"version": "${version}",
 	"name": "Ravengard Extras",
-	"description": "Client-side only QoL toolkit. First feature: Gear Highlighter, outlines items whose lore shows a Crowns value above thresholds you set. No server interaction.",
+	"description": "Client-side only QoL toolkit. Gear Highlighter outlines items by their Crowns value; Party Ping shares through-wall block markers with your party via party chat.",
 	"authors": [
 		"chrrisk"
 	],

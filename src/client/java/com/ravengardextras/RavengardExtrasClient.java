@@ -14,12 +14,16 @@ import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.resources.Identifier;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
 
 public class RavengardExtrasClient implements ClientModInitializer {
 	public static GearHighlighterConfig CONFIG;
 	public static PingConfig PING_CONFIG;
+	/** Own section in the vanilla Controls screen; label comes from key.category.ravengardextras.main. */
+	private static final KeyMapping.Category KEY_CATEGORY =
+			KeyMapping.Category.register(Identifier.fromNamespaceAndPath("ravengardextras", "main"));
 	private static KeyMapping openMenuKey;
 	private static KeyMapping pingKey;
 	private static KeyMapping markKey;
@@ -31,11 +35,11 @@ public class RavengardExtrasClient implements ClientModInitializer {
 		PING_CONFIG = PingConfig.load();
 
 		openMenuKey = KeyMappingHelper.registerKeyMapping(
-				new KeyMapping("key.ravengardextras.open_menu", InputConstants.UNKNOWN.getValue(), KeyMapping.Category.MISC));
+				new KeyMapping("key.ravengardextras.open_menu", InputConstants.UNKNOWN.getValue(), KEY_CATEGORY));
 		pingKey = KeyMappingHelper.registerKeyMapping(
-				new KeyMapping("key.ravengardextras.ping", InputConstants.KEY_Z, KeyMapping.Category.MISC));
+				new KeyMapping("key.ravengardextras.ping", InputConstants.KEY_Z, KEY_CATEGORY));
 		markKey = KeyMappingHelper.registerKeyMapping(
-				new KeyMapping("key.ravengardextras.mark", InputConstants.KEY_X, KeyMapping.Category.MISC));
+				new KeyMapping("key.ravengardextras.mark", InputConstants.KEY_X, KEY_CATEGORY));
 
 		PingChatListener.register();
 		PingRenderer.register();

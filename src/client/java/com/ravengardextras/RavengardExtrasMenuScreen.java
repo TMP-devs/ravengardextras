@@ -18,7 +18,7 @@ public class RavengardExtrasMenuScreen extends Screen {
 	private final Screen parent;
 
 	public RavengardExtrasMenuScreen(Screen parent) {
-		super(Component.literal("Ravengard Extras"));
+		super(Component.literal("RavengardExtras"));
 		this.parent = parent;
 	}
 
@@ -61,7 +61,7 @@ public class RavengardExtrasMenuScreen extends Screen {
 
 		super.extractRenderState(graphics, mouseX, mouseY, partialTick);
 
-		String title = "Ravengard Extras";
+		String title = "RavengardExtras";
 		int titleWidth = this.font.width(title);
 		int titleX = px + PANEL_WIDTH / 2 - titleWidth / 2;
 		int titleY = py + 12;

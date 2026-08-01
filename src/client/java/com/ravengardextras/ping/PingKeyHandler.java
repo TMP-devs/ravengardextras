@@ -33,8 +33,6 @@ import java.util.Optional;
 public final class PingKeyHandler {
 	/** Minimum gap between placement broadcasts; clears are exempt so panic-clearing is never blocked. */
 	private static final long COOLDOWN_MILLIS = 2000;
-	/** How long the mark key must be held to clear all marks. */
-	private static final long CLEAR_ALL_HOLD_MILLIS = 2000;
 	/** How far a dropped item's hitbox is inflated for aiming - items are tiny. */
 	private static final double ITEM_AIM_MARGIN = 0.35;
 
@@ -69,9 +67,10 @@ public final class PingKeyHandler {
 
 	/**
 	 * Called every client tick with the mark key's held state. A short press places
-	 * (on release); holding for {@link #CLEAR_ALL_HOLD_MILLIS} clears all marks.
+	 * (on release); holding for the configured duration clears all marks.
 	 */
 	public static void tickMarkKey(Minecraft client, boolean down) {
+		long holdMillis = RavengardExtrasClient.PING_CONFIG.clearAllHoldSeconds * 1000L;
 		long now = System.currentTimeMillis();
 		if (down) {
 			if (holdStartMillis == 0) {
@@ -79,7 +78,7 @@ public final class PingKeyHandler {
 				holdConsumed = false;
 			}
 			long held = now - holdStartMillis;
-			if (!holdConsumed && held >= CLEAR_ALL_HOLD_MILLIS) {
+			if (!holdConsumed && held >= holdMillis) {
 				holdConsumed = true;
 				clearAllMarks(client);
 			} else if (!holdConsumed && held >= 400) {

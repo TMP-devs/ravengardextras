@@ -21,6 +21,8 @@ public class PingConfig {
 	public String partyCommand = "pc";
 	/** How long a temporary ping stays up. Permanent marks never expire. */
 	public int tempPingSeconds = 10;
+	/** How long the mark key must be held to clear all marks. */
+	public int clearAllHoldSeconds = 2;
 	public int maxPingDistance = 160;
 
 	public static PingConfig load() {
@@ -63,6 +65,7 @@ public class PingConfig {
 			partyCommand = partyCommand.substring(1);
 		}
 		tempPingSeconds = Math.max(3, Math.min(600, tempPingSeconds));
+		clearAllHoldSeconds = Math.max(1, Math.min(30, clearAllHoldSeconds));
 		maxPingDistance = Math.max(8, Math.min(512, maxPingDistance));
 	}
 }

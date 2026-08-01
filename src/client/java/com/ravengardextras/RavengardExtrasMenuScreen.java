@@ -13,7 +13,7 @@ import net.minecraft.world.item.Items;
 /** Feature list for the mod, styled as a small panel. Currently just Gear Highlighter; more rows slot in later. */
 public class RavengardExtrasMenuScreen extends Screen {
 	private static final int PANEL_WIDTH = 240;
-	private static final int PANEL_HEIGHT = 150;
+	private static final int PANEL_HEIGHT = 164;
 
 	private final Screen parent;
 
@@ -44,7 +44,7 @@ public class RavengardExtrasMenuScreen extends Screen {
 		rowY += 44;
 
 		this.addRenderableWidget(Button.builder(Component.literal("Close"), button -> this.onClose())
-				.bounds(px + PANEL_WIDTH / 2 - 40, py + PANEL_HEIGHT - 26, 80, 18).build());
+				.bounds(px + PANEL_WIDTH / 2 - 40, py + PANEL_HEIGHT - 40, 80, 18).build());
 	}
 
 	@Override
@@ -75,17 +75,17 @@ public class RavengardExtrasMenuScreen extends Screen {
 			cursorX += this.font.width(letter);
 		}
 
-		drawCredit(graphics);
+		drawCredit(graphics, px, py, x1, y1);
 	}
 
-	private void drawCredit(GuiGraphicsExtractor graphics) {
+	private void drawCredit(GuiGraphicsExtractor graphics, int px, int py, int x1, int y1) {
 		String prefix = "a mod by ";
 		String name = "chrrisk";
 		float scale = 0.65F;
 		int fullWidth = this.font.width(prefix) + this.font.width(name);
 		int scaledWidth = (int) (fullWidth * scale);
-		int drawX = this.width - scaledWidth - 6;
-		int drawY = this.height - 12;
+		int drawX = px + (x1 - px) / 2 - scaledWidth / 2;
+		int drawY = y1 - 12;
 
 		graphics.pose().pushMatrix();
 		graphics.pose().translate(drawX, drawY);

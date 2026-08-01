@@ -5,9 +5,9 @@
 	"name": "Ravengard Extras",
 	"description": "Client-side only QoL toolkit. First feature: Gear Highlighter, outlines items whose lore shows a Crowns value above thresholds you set. No server interaction.",
 	"authors": [
-		"you"
+		"chrrisk"
 	],
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"environment": "client",
 	"entrypoints": {
 		"client": [

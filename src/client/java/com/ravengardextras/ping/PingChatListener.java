@@ -33,6 +33,7 @@ public final class PingChatListener {
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
 			PingManager.clear();
 			PingColors.reset();
+			PartyStatus.reset();
 		});
 		// Coordinates mean nothing in another dimension, so drop pings on any level change.
 		ClientLevelEvents.AFTER_CLIENT_LEVEL_CHANGE.register((client, level) -> PingManager.clear());
@@ -41,6 +42,11 @@ public final class PingChatListener {
 	private static void handle(Component message, String authoritativeSender) {
 		if (!RavengardExtrasClient.PING_CONFIG.enabled) {
 			return;
+		}
+		String plain = message.getString().replaceAll("§.", "");
+		if (PartyStatus.observe(plain, System.currentTimeMillis())) {
+			Minecraft.getInstance().gui.hud.setOverlayMessage(
+					Component.literal("No party - pings are now just for you"), false);
 		}
 		PingMessage.Parsed parsed = PingMessage.parse(message.getString());
 		if (parsed == null) {

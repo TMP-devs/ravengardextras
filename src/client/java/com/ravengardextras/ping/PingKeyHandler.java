@@ -89,7 +89,7 @@ public final class PingKeyHandler {
 	}
 
 	private static void broadcast(Minecraft client, PingConfig config, String message) {
-		if (config.partyCommand.isBlank()) {
+		if (config.partyCommand.isBlank() || !PartyStatus.shouldBroadcast()) {
 			return;
 		}
 		ClientPacketListener connection = client.getConnection();
@@ -98,6 +98,7 @@ public final class PingKeyHandler {
 			// arguments when the command parses as signable, and proxy networks
 			// (e.g. Hypixel) kick clients over signed-chat state mismatches.
 			connection.send(new ServerboundChatCommandPacket(config.partyCommand + " " + message));
+			PartyStatus.noteBroadcast(System.currentTimeMillis());
 		}
 	}
 }

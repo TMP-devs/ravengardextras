@@ -54,6 +54,10 @@ public final class PingMessage {
 		return "RGE-MARK CLEAR @ " + x + ", " + y + ", " + z;
 	}
 
+	public static String formatClearAllMarks() {
+		return "RGE-MARK CLEAR";
+	}
+
 	/** Keeps a label safe for the wire format: no parentheses or formatting codes, bounded length. */
 	public static String sanitizeLabel(String label) {
 		if (label == null) {

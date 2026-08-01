@@ -4,6 +4,7 @@
 	"package": "com.ravengardextras.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
+		"AbstractContainerScreenAccessor",
 		"AbstractContainerScreenMixin"
 	],
 	"injectors": {

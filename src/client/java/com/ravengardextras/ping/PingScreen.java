@@ -76,12 +76,12 @@ public class PingScreen extends Screen {
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
 		super.extractRenderState(graphics, mouseX, mouseY, partialTick);
 		int centerX = this.width / 2;
-		graphics.text(this.font, this.title, centerX - this.font.width(this.title) / 2, this.height / 2 - 104, 0xFFFFFF);
+		graphics.text(this.font, this.title, centerX - this.font.width(this.title) / 2, this.height / 2 - 104, 0xFFFFFFFF);
 
 		graphics.text(this.font, "Party chat command (blank = show only to yourself)",
-				centerX - 75, this.commandBox.getY() - 12, 0xAAAAAA);
+				centerX - 75, this.commandBox.getY() - 12, 0xFFAAAAAA);
 		graphics.text(this.font, "Temp ping duration (marks never expire)",
-				centerX - 75, this.durationBox.getY() - 12, 0xAAAAAA);
+				centerX - 75, this.durationBox.getY() - 12, 0xFFAAAAAA);
 
 		Minecraft minecraft = Minecraft.getInstance();
 		if (minecraft.player != null) {
@@ -90,7 +90,7 @@ public class PingScreen extends Screen {
 			String label = "Your ping color:";
 			int labelWidth = this.font.width(label);
 			int swatchY = this.durationBox.getY() + 30;
-			graphics.text(this.font, label, centerX - (labelWidth + 14) / 2, swatchY, 0xAAAAAA);
+			graphics.text(this.font, label, centerX - (labelWidth + 14) / 2, swatchY, 0xFFAAAAAA);
 			int swatchX = centerX + (labelWidth + 14) / 2 - 10;
 			graphics.fill(swatchX, swatchY - 1, swatchX + 10, swatchY + 9, 0xFFFFFFFF);
 			graphics.fill(swatchX + 1, swatchY, swatchX + 9, swatchY + 8, color);
@@ -98,7 +98,7 @@ public class PingScreen extends Screen {
 
 		if (!this.errorMessage.isEmpty()) {
 			graphics.text(this.font, this.errorMessage, centerX - this.font.width(this.errorMessage) / 2,
-					this.height / 2 + 92, 0xFF5555);
+					this.height / 2 + 92, 0xFFFF5555);
 		}
 	}
 

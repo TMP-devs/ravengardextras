@@ -10,7 +10,10 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
 
@@ -37,6 +40,18 @@ public class RavengardExtrasClient implements ClientModInitializer {
 		PingChatListener.register();
 		PingRenderer.register();
 
+		// Mark the hovered item while a chest/inventory GUI is open (keybinds don't
+		// fire in screens, so this listens to the screen's own key events).
+		ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
+			if (screen instanceof AbstractContainerScreen<?> containerScreen) {
+				ScreenKeyboardEvents.afterKeyPress(screen).register((scr, keyEvent) -> {
+					if (markKey.matches(keyEvent)) {
+						PingKeyHandler.markHoveredItem(client, containerScreen);
+					}
+				});
+			}
+		});
+
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while (openMenuKey.consumeClick()) {
 				menuOpenRequested = true;
@@ -45,8 +60,9 @@ public class RavengardExtrasClient implements ClientModInitializer {
 				PingKeyHandler.onPingKey(client);
 			}
 			while (markKey.consumeClick()) {
-				PingKeyHandler.onMarkKey(client);
+				// drained; the mark key is driven by held-state below (tap vs hold)
 			}
+			PingKeyHandler.tickMarkKey(client, markKey.isDown());
 			// Deferred to end-of-tick so a chat screen's own close (which happens
 			// right after a command is sent) can never race with and undo this.
 			if (menuOpenRequested) {

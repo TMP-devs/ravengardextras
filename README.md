@@ -38,4 +38,4 @@ Valorant-style pings for your party (both keys rebindable in Controls):
 
 ## Credits
 
-Made by chrrisk and scrolls.
+Made by chrrisk and Scrolls.

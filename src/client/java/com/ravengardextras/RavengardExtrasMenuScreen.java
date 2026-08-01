@@ -90,7 +90,7 @@ public class RavengardExtrasMenuScreen extends Screen {
 		String prefix = "a mod by ";
 		String name1 = "chrrisk";
 		String separator = " & ";
-		String name2 = "scrolls";
+		String name2 = "Scrolls";
 		float scale = 0.65F;
 		int fullWidth = this.font.width(prefix) + this.font.width(name1) + this.font.width(separator) + this.font.width(name2);
 		int scaledWidth = (int) (fullWidth * scale);

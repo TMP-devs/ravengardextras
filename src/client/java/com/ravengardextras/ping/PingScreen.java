@@ -85,7 +85,12 @@ public class PingScreen extends Screen {
 		Minecraft minecraft = Minecraft.getInstance();
 		if (minecraft.player != null) {
 			String name = minecraft.player.getName().getString();
-			int color = PingColors.colorFor(name);
+			java.util.List<String> names = new java.util.ArrayList<>();
+			for (PingManager.Ping ping : PingManager.active(System.currentTimeMillis(), this.config.pingDurationSeconds * 1000L)) {
+				names.add(ping.sender());
+			}
+			names.add(name);
+			int color = PingColors.assign(names).get(name.toLowerCase(java.util.Locale.ROOT));
 			String label = "Your ping color:";
 			int labelWidth = this.font.width(label);
 			int swatchY = this.durationBox.getY() + 30;

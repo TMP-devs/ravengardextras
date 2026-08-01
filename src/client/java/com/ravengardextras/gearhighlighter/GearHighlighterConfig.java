@@ -1,0 +1,73 @@
+package com.ravengardextras.gearhighlighter;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import net.fabricmc.loader.api.FabricLoader;
+
+import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+/** Three threshold/color tiers. Higher tier number = higher bar; the highest one met wins. */
+public class GearHighlighterConfig {
+	/** Sentinel color (alpha byte 0x01, never used by a real preset) meaning "animate rainbow". */
+	public static final int RAINBOW = 0x01FFFFFF;
+
+	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+	private static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("ravengardextras.json");
+
+	public boolean enabled = true;
+	public long tier1Threshold = 50;
+	public int tier1Color = 0xFF55FF55; // ARGB, default green
+	public long tier2Threshold = 200;
+	public int tier2Color = 0xFFFF5555; // ARGB, default red
+	public long tier3Threshold = 1000;
+	public int tier3Color = 0xFFFFD700; // ARGB, default gold
+
+	public static GearHighlighterConfig load() {
+		if (Files.exists(PATH)) {
+			try (Reader reader = Files.newBufferedReader(PATH, StandardCharsets.UTF_8)) {
+				GearHighlighterConfig cfg = GSON.fromJson(reader, GearHighlighterConfig.class);
+				if (cfg != null) {
+					return cfg;
+				}
+			} catch (IOException | RuntimeException ignored) {
+				// fall through to defaults
+			}
+		}
+		GearHighlighterConfig cfg = new GearHighlighterConfig();
+		cfg.save();
+		return cfg;
+	}
+
+	public void save() {
+		try {
+			Files.createDirectories(PATH.getParent());
+			try (Writer writer = Files.newBufferedWriter(PATH, StandardCharsets.UTF_8)) {
+				GSON.toJson(this, writer);
+			}
+		} catch (IOException ignored) {
+			// non-fatal, config just won't persist this run
+		}
+	}
+
+	/** Returns ARGB outline color for the given crown value, or 0 if below every threshold. */
+	public int colorFor(long crowns) {
+		if (!enabled) {
+			return 0;
+		}
+		if (crowns >= tier3Threshold) {
+			return tier3Color;
+		}
+		if (crowns >= tier2Threshold) {
+			return tier2Color;
+		}
+		if (crowns >= tier1Threshold) {
+			return tier1Color;
+		}
+		return 0;
+	}
+}

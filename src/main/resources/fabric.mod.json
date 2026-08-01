@@ -1,0 +1,29 @@
+{
+	"schemaVersion": 1,
+	"id": "ravengardextras",
+	"version": "${version}",
+	"name": "Ravengard Extras",
+	"description": "Client-side only QoL toolkit. First feature: Gear Highlighter, outlines items whose lore shows a Crowns value above thresholds you set. No server interaction.",
+	"authors": [
+		"you"
+	],
+	"license": "CC0-1.0",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"com.ravengardextras.RavengardExtrasClient"
+		]
+	},
+	"mixins": [
+		{
+			"config": "ravengardextras.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~26.2",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}

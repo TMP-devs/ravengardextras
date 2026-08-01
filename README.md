@@ -18,7 +18,7 @@ Outlines item slots in any inventory GUI based on their "Crowns" value.
 
 ### Party Ping
 
-League-style pings for your party. Press `Z` (rebindable in Controls) to ping the block you're looking at.
+Valorant-style pings for your party. Press `Z` (rebindable in Controls) to ping the block you're looking at.
 
 - A diamond marker appears on the block, visible **through walls**, with the pinger's name and live distance
 - Broadcast through party chat as plain coordinates (`RGE-PING @ x, y, z`), so it works on any server — party members with the mod see the diamond, everyone else still gets the coords

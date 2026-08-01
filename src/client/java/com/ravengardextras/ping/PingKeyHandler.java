@@ -7,17 +7,29 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundChatCommandPacket;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Turns ping-key presses into local pings plus party chat broadcasts.
- * The ping key places a temporary ping; the mark key places a permanent mark
- * (crouch + mark key, or marking the same block again, clears it).
+ * The ping key places a temporary ping. The mark key places a permanent mark
+ * (up to {@link PingManager#MAX_MARKS}; the oldest is replaced past that); if
+ * the crosshair is on a dropped item, the mark takes the item's name. Marking
+ * an already-marked block clears that mark, and crouch + mark key clears the
+ * mark you're looking toward - no menus, so it stays fast under pressure.
  */
 public final class PingKeyHandler {
-	/** Minimum gap between broadcasts, so key spam can't flood party chat and trip server spam limits. */
+	/** Minimum gap between placement broadcasts; clears are exempt so panic-clearing is never blocked. */
 	private static final long COOLDOWN_MILLIS = 2000;
+	/** How far a dropped item's hitbox is inflated for aiming - items are tiny. */
+	private static final double ITEM_AIM_MARGIN = 0.35;
 
 	private static long lastPingMillis;
 
@@ -41,51 +53,109 @@ public final class PingKeyHandler {
 		if (player == null || client.level == null) {
 			return;
 		}
+		String name = player.getName().getString();
+
+		if (permanent && player.isShiftKeyDown()) {
+			clearAimedMark(client, player, name);
+			return;
+		}
+
+		HitResult hit = player.pick(config.maxPingDistance, 1.0F, false);
+		boolean blockHit = hit instanceof BlockHitResult && hit.getType() == HitResult.Type.BLOCK;
+
+		BlockPos pos;
+		String label = null;
+		if (permanent) {
+			// Prefer a dropped item under the crosshair (but never through a wall).
+			ItemEntity item = pickItem(player, blockHit ? hit.getLocation() : null, config.maxPingDistance);
+			if (item != null) {
+				pos = item.blockPosition();
+				label = item.getItem().getHoverName().getString();
+			} else if (blockHit) {
+				pos = ((BlockHitResult) hit).getBlockPos();
+			} else {
+				client.gui.hud.setOverlayMessage(Component.literal("No block in ping range"), false);
+				return;
+			}
+			if (PingManager.markAt(name, pos) != null) {
+				clearMarkAt(client, name, pos); // marking the same spot toggles it off
+				return;
+			}
+		} else if (blockHit) {
+			pos = ((BlockHitResult) hit).getBlockPos();
+		} else {
+			client.gui.hud.setOverlayMessage(Component.literal("No block in ping range"), false);
+			return;
+		}
 
 		long now = System.currentTimeMillis();
 		if (now - lastPingMillis < COOLDOWN_MILLIS) {
 			client.gui.hud.setOverlayMessage(Component.literal("Ping on cooldown"), false);
 			return;
 		}
-
-		String name = player.getName().getString();
-		if (permanent && player.isShiftKeyDown()) {
-			clearMark(client, name, now);
-			return;
-		}
-
-		HitResult hit = player.pick(config.maxPingDistance, 1.0F, false);
-		if (!(hit instanceof BlockHitResult blockHit) || hit.getType() != HitResult.Type.BLOCK) {
-			client.gui.hud.setOverlayMessage(Component.literal("No block in ping range"), false);
-			return;
-		}
-		BlockPos pos = blockHit.getBlockPos();
+		lastPingMillis = now;
 
 		if (permanent) {
-			PingManager.Ping existing = PingManager.getMark(name);
-			if (existing != null && existing.pos().equals(pos)) {
-				clearMark(client, name, now); // marking the same block toggles it off
-				return;
-			}
+			PingManager.addMark(name, pos, label);
+			broadcast(client, config, PingMessage.formatMark(pos.getX(), pos.getY(), pos.getZ(), label));
+		} else {
+			PingManager.addPing(name, pos);
+			broadcast(client, config, PingMessage.formatPing(pos.getX(), pos.getY(), pos.getZ()));
 		}
-
-		lastPingMillis = now;
-		PingManager.add(name, pos, permanent);
-		String message = permanent
-				? PingMessage.formatMark(pos.getX(), pos.getY(), pos.getZ())
-				: PingMessage.formatPing(pos.getX(), pos.getY(), pos.getZ());
-		broadcast(client, config, message);
 	}
 
-	private static void clearMark(Minecraft client, String name, long now) {
-		if (PingManager.getMark(name) == null) {
-			client.gui.hud.setOverlayMessage(Component.literal("No mark to clear"), false);
+	/** The dropped item nearest along the view ray, or null. maxDistance stops at hitLocation (a wall) if given. */
+	private static ItemEntity pickItem(LocalPlayer player, Vec3 hitLocation, double maxDistance) {
+		Vec3 from = player.getEyePosition(1.0F);
+		double range = hitLocation != null ? Math.min(hitLocation.distanceTo(from), maxDistance) : maxDistance;
+		Vec3 to = from.add(player.getViewVector(1.0F).scale(range));
+		AABB searchBox = new AABB(from, to).inflate(ITEM_AIM_MARGIN);
+
+		ItemEntity nearest = null;
+		double nearestDistSqr = Double.MAX_VALUE;
+		List<Entity> candidates = player.level().getEntities(player, searchBox, entity -> entity instanceof ItemEntity);
+		for (Entity entity : candidates) {
+			Optional<Vec3> clip = entity.getBoundingBox().inflate(ITEM_AIM_MARGIN).clip(from, to);
+			if (clip.isPresent()) {
+				double distSqr = from.distanceToSqr(clip.get());
+				if (distSqr < nearestDistSqr) {
+					nearest = (ItemEntity) entity;
+					nearestDistSqr = distSqr;
+				}
+			}
+		}
+		return nearest;
+	}
+
+	/** Clears whichever of the player's marks is closest to the crosshair direction. */
+	private static void clearAimedMark(Minecraft client, LocalPlayer player, String name) {
+		List<PingManager.Ping> marks = PingManager.marksOf(name);
+		if (marks.isEmpty()) {
+			client.gui.hud.setOverlayMessage(Component.literal("No marks to clear"), false);
 			return;
 		}
-		lastPingMillis = now;
-		PingManager.removeMark(name);
-		broadcast(client, RavengardExtrasClient.PING_CONFIG, PingMessage.formatClearMark());
-		client.gui.hud.setOverlayMessage(Component.literal("Mark cleared"), false);
+		Vec3 eye = player.getEyePosition(1.0F);
+		Vec3 view = player.getViewVector(1.0F).normalize();
+		PingManager.Ping best = null;
+		double bestDot = -2.0;
+		for (PingManager.Ping mark : marks) {
+			Vec3 toMark = Vec3.atCenterOf(mark.pos()).subtract(eye).normalize();
+			double dot = toMark.dot(view);
+			if (dot > bestDot) {
+				bestDot = dot;
+				best = mark;
+			}
+		}
+		clearMarkAt(client, name, best.pos());
+	}
+
+	private static void clearMarkAt(Minecraft client, String name, BlockPos pos) {
+		PingManager.Ping mark = PingManager.markAt(name, pos);
+		PingManager.removeMarkAt(name, pos);
+		broadcast(client, RavengardExtrasClient.PING_CONFIG,
+				PingMessage.formatClearMark(pos.getX(), pos.getY(), pos.getZ()));
+		String what = mark != null && mark.label() != null ? mark.label() : "Mark";
+		client.gui.hud.setOverlayMessage(Component.literal(what + " cleared"), false);
 	}
 
 	private static void broadcast(Minecraft client, PingConfig config, String message) {

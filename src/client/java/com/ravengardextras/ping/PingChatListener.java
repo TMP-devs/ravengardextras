@@ -53,14 +53,19 @@ public final class PingChatListener {
 			return;
 		}
 		String sender = authoritativeSender != null ? authoritativeSender : parsed.sender();
-		if (parsed.type() == PingMessage.Type.CLEAR_MARK) {
-			PingManager.removeMark(sender);
-			return;
-		}
-		boolean permanent = parsed.type() == PingMessage.Type.MARK;
 		BlockPos pos = new BlockPos(parsed.x(), parsed.y(), parsed.z());
-		reconcileOwnEcho(sender, pos, permanent);
-		PingManager.add(sender, pos, permanent);
+		switch (parsed.type()) {
+			case CLEAR_MARK -> PingManager.removeMarkAt(sender, pos);
+			case CLEAR_ALL_MARKS -> PingManager.removeAllMarks(sender);
+			case MARK -> {
+				reconcileOwnEcho(sender, pos, true);
+				PingManager.addMark(sender, pos, parsed.label());
+			}
+			case PING -> {
+				reconcileOwnEcho(sender, pos, false);
+				PingManager.addPing(sender, pos);
+			}
+		}
 	}
 
 	/**
@@ -77,7 +82,11 @@ public final class PingChatListener {
 		}
 		String ownName = minecraft.player.getName().getString();
 		if (!sender.toLowerCase(Locale.ROOT).equals(ownName.toLowerCase(Locale.ROOT))) {
-			PingManager.removeIfAt(ownName, pos, permanent);
+			if (permanent) {
+				PingManager.removeMarkAt(ownName, pos);
+			} else {
+				PingManager.removePingIfAt(ownName, pos);
+			}
 		}
 	}
 }

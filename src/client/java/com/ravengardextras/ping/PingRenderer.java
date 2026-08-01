@@ -80,7 +80,8 @@ public final class PingRenderer {
 			// normal nametag size up close (the diamond's scale shrinks toward zero).
 			// The attachment y compensates submitNameTag's +0.5 offset.
 			float labelScale = Math.max(1.0F, scale);
-			Component label = Component.literal(ping.sender() + " (" + Math.round(distance) + "m)")
+			String labelText = ping.label() != null ? ping.label() : ping.sender();
+			Component label = Component.literal(labelText + " (" + Math.round(distance) + "m)")
 					.withColor(color & 0xFFFFFF);
 			poseStack.pushPose();
 			poseStack.scale(labelScale, labelScale, labelScale);

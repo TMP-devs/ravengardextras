@@ -6,6 +6,7 @@ import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ServerboundChatCommandPacket;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 
@@ -36,7 +37,11 @@ public final class PingKeyHandler {
 		if (!config.partyCommand.isBlank()) {
 			ClientPacketListener connection = client.getConnection();
 			if (connection != null) {
-				connection.sendCommand(config.partyCommand + " " + PingMessage.format(pos.getX(), pos.getY(), pos.getZ()));
+				String command = config.partyCommand + " " + PingMessage.format(pos.getX(), pos.getY(), pos.getZ());
+				// Always send the plain unsigned command packet. sendCommand() signs the
+				// arguments when the command parses as signable, and proxy networks
+				// (e.g. Hypixel) kick clients over signed-chat state mismatches.
+				connection.send(new ServerboundChatCommandPacket(command));
 			}
 		}
 	}

@@ -40,6 +40,7 @@ public class PingScreen extends Screen {
 
 		this.commandBox = new EditBox(this.font, centerX - 75, rowY + 12, 150, 20,
 				Component.literal("Party chat command"));
+		this.commandBox.setMaxLength(128);
 		this.commandBox.setValue(this.config.partyCommand);
 		this.addRenderableWidget(this.commandBox);
 		rowY += gap + 12;

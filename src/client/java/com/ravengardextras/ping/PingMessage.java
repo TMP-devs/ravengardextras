@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
  * <p>Pure string logic, no Minecraft types.
  */
 public final class PingMessage {
-	private static final Pattern COORDS = Pattern.compile("RGE-PING @ (-?\\d{1,7}), (-?\\d{1,7}), (-?\\d{1,7})");
+	private static final Pattern COORDS = Pattern.compile("RGE-PING @ (-?\\d{1,8}), (-?\\d{1,8}), (-?\\d{1,8})");
 	/** A player-name token directly followed by a chat separator ("Name:", "Name >", "Name »"). */
 	private static final Pattern SENDER = Pattern.compile("([A-Za-z0-9_]{1,16})\\s*[:>»]");
 

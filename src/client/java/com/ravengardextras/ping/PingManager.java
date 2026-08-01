@@ -38,6 +38,12 @@ public final class PingManager {
 		return result;
 	}
 
+	/** Removes the sender's ping only if it sits at exactly this position. */
+	public static void removeIfAt(String sender, BlockPos pos) {
+		PINGS.computeIfPresent(sender.toLowerCase(Locale.ROOT),
+				(key, ping) -> ping.pos().equals(pos) ? null : ping);
+	}
+
 	public static void clear() {
 		PINGS.clear();
 	}

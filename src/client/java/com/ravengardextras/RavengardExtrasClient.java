@@ -58,4 +58,9 @@ public class RavengardExtrasClient implements ClientModInitializer {
 			dispatcher.register(literal("rge").executes(openMenu));
 		});
 	}
+
+	/** Current display name of the ping key (tracks rebinds), e.g. "Z". */
+	public static String pingKeyName() {
+		return pingKey != null ? pingKey.getTranslatedKeyMessage().getString() : "?";
+	}
 }

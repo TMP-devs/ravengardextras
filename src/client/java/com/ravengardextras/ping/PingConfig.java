@@ -31,8 +31,10 @@ public class PingConfig {
 					return cfg;
 				}
 			} catch (IOException | RuntimeException ignored) {
-				// fall through to defaults
+				// Unreadable file: run on defaults but leave the file alone so a
+				// hand-edit typo doesn't wipe the user's settings.
 			}
+			return new PingConfig();
 		}
 		PingConfig cfg = new PingConfig();
 		cfg.save();

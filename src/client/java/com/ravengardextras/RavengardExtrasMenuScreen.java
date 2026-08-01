@@ -11,7 +11,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
-/** Feature list for the mod, styled as a small panel. Currently just Gear Highlighter; more rows slot in later. */
+/** Feature list for the mod, styled as a small panel: one row per feature (Gear Highlighter, Party Ping). */
 public class RavengardExtrasMenuScreen extends Screen {
 	private static final int PANEL_WIDTH = 240;
 	private static final int PANEL_HEIGHT = 164;
@@ -45,7 +45,7 @@ public class RavengardExtrasMenuScreen extends Screen {
 		rowY += 44;
 
 		this.addRenderableWidget(new FeatureButton(px + 12, rowY, PANEL_WIDTH - 24, 36,
-				"Party Ping", "Ping blocks for your party (Z)",
+				"Party Ping", "Ping blocks for your party (" + RavengardExtrasClient.pingKeyName() + ")",
 				new ItemStack(Items.ENDER_EYE),
 				() -> RavengardExtrasClient.PING_CONFIG.enabled,
 				() -> Minecraft.getInstance().gui.setScreen(new PingScreen(this, RavengardExtrasClient.PING_CONFIG))));

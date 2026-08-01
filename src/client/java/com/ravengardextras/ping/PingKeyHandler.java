@@ -135,6 +135,13 @@ public final class PingKeyHandler {
 		}
 		String name = player.getName().getString();
 
+		// Looking at one of your own mark diamonds? Tap clears it.
+		PingManager.Ping aimed = findAimedMark(player, name);
+		if (aimed != null) {
+			clearMarkAt(client, name, aimed.pos());
+			return;
+		}
+
 		HitResult hit = player.pick(config.maxPingDistance, 1.0F, false);
 		boolean blockHit = hit instanceof BlockHitResult && hit.getType() == HitResult.Type.BLOCK;
 
@@ -171,6 +178,29 @@ public final class PingKeyHandler {
 		}
 		lastPingMillis = now;
 		return false;
+	}
+
+	/**
+	 * The player's own mark whose floating diamond the crosshair is on, or null.
+	 * Angular test against the diamond's center; the diamond's apparent size is
+	 * roughly constant (it scales with distance), so a fixed cone works at any range.
+	 */
+	private static PingManager.Ping findAimedMark(LocalPlayer player, String name) {
+		final double aimCone = 0.9975; // cos ~4 degrees, slightly wider than the diamond
+		Vec3 eye = player.getEyePosition(1.0F);
+		Vec3 view = player.getViewVector(1.0F).normalize();
+		PingManager.Ping best = null;
+		double bestDot = aimCone;
+		for (PingManager.Ping mark : PingManager.marksOf(name)) {
+			Vec3 diamondCenter = new Vec3(
+					mark.pos().getX() + 0.5, mark.pos().getY() + PingRenderer.HOVER, mark.pos().getZ() + 0.5);
+			double dot = diamondCenter.subtract(eye).normalize().dot(view);
+			if (dot > bestDot) {
+				bestDot = dot;
+				best = mark;
+			}
+		}
+		return best;
 	}
 
 	/** The dropped item nearest along the view ray, or null. maxDistance stops at hitLocation (a wall) if given. */

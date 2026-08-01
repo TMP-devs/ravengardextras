@@ -24,8 +24,8 @@ public final class PingRenderer {
 	private static final float HALF_WIDTH = 0.35F;
 	private static final float HALF_HEIGHT = 0.5F;
 	private static final float EDGE = 0.08F;
-	/** Diamond center floats this far above the bottom of the pinged block. */
-	private static final float HOVER = 1.7F;
+	/** Diamond center floats this far above the bottom of the pinged block (shared with aim-to-clear). */
+	public static final float HOVER = 1.7F;
 	private static final float SCALE_PER_BLOCK = 0.08F;
 	private static final long FADE_MILLIS = 1000;
 
@@ -70,6 +70,9 @@ public final class PingRenderer {
 			}
 
 			int color = PingColors.colorFor(ping.sender());
+			// Marks are a darker shade of the player's color so the two kinds read
+			// apart at a glance; the label keeps the full color for readability.
+			int diamondColor = ping.permanent() ? darken(color) : color;
 
 			poseStack.pushPose();
 			poseStack.translate(x, y, z);
@@ -92,15 +95,22 @@ public final class PingRenderer {
 
 			poseStack.scale(scale, scale, scale);
 			poseStack.mulPose(camera.orientation);
-			boolean permanent = ping.permanent();
 			context.submitNodeCollector().submitCustomGeometry(
 					poseStack, RenderTypes.textBackgroundSeeThrough(),
-					(pose, buffer) -> drawDiamond(pose, buffer, color, permanent));
+					(pose, buffer) -> drawDiamond(pose, buffer, diamondColor));
 			poseStack.popPose();
 		}
 	}
 
-	private static void drawDiamond(PoseStack.Pose pose, VertexConsumer buffer, int color, boolean permanent) {
+	/** Darkens an ARGB color to ~55% brightness, keeping alpha. */
+	private static int darken(int argb) {
+		int r = (int) (((argb >> 16) & 0xFF) * 0.55F);
+		int g = (int) (((argb >> 8) & 0xFF) * 0.55F);
+		int b = (int) ((argb & 0xFF) * 0.55F);
+		return (argb & 0xFF000000) | (r << 16) | (g << 8) | b;
+	}
+
+	private static void drawDiamond(PoseStack.Pose pose, VertexConsumer buffer, int color) {
 		int fill = (color & 0x00FFFFFF) | 0xB0000000;
 
 		// Center fill, both windings so it can't be culled away.
@@ -108,14 +118,6 @@ public final class PingRenderer {
 				0.0F, HALF_HEIGHT, HALF_WIDTH, 0.0F, 0.0F, -HALF_HEIGHT, -HALF_WIDTH, 0.0F);
 		quad(pose, buffer, fill,
 				-HALF_WIDTH, 0.0F, 0.0F, -HALF_HEIGHT, HALF_WIDTH, 0.0F, 0.0F, HALF_HEIGHT);
-
-		// Permanent marks get a white core so they read differently from pings.
-		if (permanent) {
-			float cw = HALF_WIDTH * 0.35F;
-			float ch = HALF_HEIGHT * 0.35F;
-			quad(pose, buffer, 0xFFFFFFFF, 0.0F, ch, cw, 0.0F, 0.0F, -ch, -cw, 0.0F);
-			quad(pose, buffer, 0xFFFFFFFF, -cw, 0.0F, 0.0F, -ch, cw, 0.0F, 0.0F, ch);
-		}
 
 		// Solid rim: a slightly larger diamond ring built from four edge quads.
 		float ow = HALF_WIDTH + EDGE;

@@ -30,7 +30,10 @@ public final class PingChatListener {
 				handle(message, null);
 			}
 		});
-		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> PingManager.clear());
+		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+			PingManager.clear();
+			PingColors.reset();
+		});
 		// Coordinates mean nothing in another dimension, so drop pings on any level change.
 		ClientLevelEvents.AFTER_CLIENT_LEVEL_CHANGE.register((client, level) -> PingManager.clear());
 	}

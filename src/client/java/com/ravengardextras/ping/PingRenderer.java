@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.ravengardextras.RavengardExtrasClient;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.network.chat.Component;
@@ -13,10 +12,7 @@ import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 /**
  * Draws each active ping as a camera-facing diamond above the pinged block, plus a
@@ -56,18 +52,6 @@ public final class PingRenderer {
 		Vec3 cameraPos = camera.pos;
 		PoseStack poseStack = context.poseStack();
 
-		// The local player's name is always in the pool so your color is reserved
-		// on your own screen even before your first ping.
-		List<String> names = new ArrayList<>(pings.size() + 1);
-		for (PingManager.Ping ping : pings) {
-			names.add(ping.sender());
-		}
-		Minecraft minecraft = Minecraft.getInstance();
-		if (minecraft.player != null) {
-			names.add(minecraft.player.getName().getString());
-		}
-		Map<String, Integer> colors = PingColors.assign(names);
-
 		for (PingManager.Ping ping : pings) {
 			double x = ping.pos().getX() + 0.5 - cameraPos.x;
 			double y = ping.pos().getY() + HOVER - cameraPos.y;
@@ -83,7 +67,7 @@ public final class PingRenderer {
 				continue;
 			}
 
-			int color = colors.get(ping.sender().toLowerCase(Locale.ROOT));
+			int color = PingColors.colorFor(ping.sender());
 
 			poseStack.pushPose();
 			poseStack.translate(x, y, z);

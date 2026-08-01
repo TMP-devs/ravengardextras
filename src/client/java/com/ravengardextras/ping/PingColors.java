@@ -1,17 +1,19 @@
 package com.ravengardextras.ping;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Every player gets a ping color derived from their name, so all clients agree on
- * "Scrolls = blue" without exchanging any data. When two names would land on the
- * same color, the alphabetically-later name moves to the next free color - names
- * are processed in sorted order, so every client resolves the clash identically
- * and no two players on the same screen ever share a color (up to palette size).
+ * Every player gets a ping color derived from their name, so clients agree on
+ * "Scrolls = blue" without exchanging any data. When a new name would land on a
+ * color already taken this session, it moves to the next free one. Assignments
+ * are sticky until disconnect: a player's color never changes mid-session, no
+ * matter who pings later, and no two players on the same screen share a color
+ * (up to palette size). Party chat is delivered to everyone in the same order,
+ * so clients observing the same pings resolve clashes identically.
  */
 public final class PingColors {
 	private static final int[] PALETTE = {
@@ -25,33 +27,39 @@ public final class PingColors {
 			0xFFFF55FF, // pink
 	};
 
+	/** Lowercased name -> color, for the lifetime of the connection. */
+	private static final Map<String, Integer> ASSIGNED = new ConcurrentHashMap<>();
+
 	private PingColors() {
 	}
 
-	/**
-	 * Assigns a distinct color to each name (until the palette runs out; a 9th+
-	 * player falls back to their base hash color). Keys are lowercased names.
-	 */
-	public static Map<String, Integer> assign(Collection<String> playerNames) {
-		List<String> sorted = playerNames.stream()
-				.map(name -> name.toLowerCase(Locale.ROOT))
-				.distinct()
-				.sorted()
-				.toList();
-		Map<String, Integer> colors = new HashMap<>();
-		boolean[] used = new boolean[PALETTE.length];
-		int assigned = 0;
-		for (String name : sorted) {
-			int slot = Math.floorMod(name.hashCode(), PALETTE.length);
-			if (assigned < PALETTE.length) {
-				while (used[slot]) {
-					slot = (slot + 1) % PALETTE.length;
-				}
-			}
-			used[slot] = true;
-			assigned++;
-			colors.put(name, PALETTE[slot]);
+	public static int colorFor(String playerName) {
+		return ASSIGNED.computeIfAbsent(playerName.toLowerCase(Locale.ROOT), PingColors::pickColor);
+	}
+
+	/** The color the name has (or would get) without reserving it - for UI previews. */
+	public static int preview(String playerName) {
+		Integer assigned = ASSIGNED.get(playerName.toLowerCase(Locale.ROOT));
+		return assigned != null ? assigned : PALETTE[baseSlot(playerName.toLowerCase(Locale.ROOT))];
+	}
+
+	public static void reset() {
+		ASSIGNED.clear();
+	}
+
+	private static int pickColor(String lowercaseName) {
+		int slot = baseSlot(lowercaseName);
+		Set<Integer> used = new HashSet<>(ASSIGNED.values());
+		if (used.size() >= PALETTE.length) {
+			return PALETTE[slot]; // palette exhausted, collisions unavoidable
 		}
-		return colors;
+		while (used.contains(PALETTE[slot])) {
+			slot = (slot + 1) % PALETTE.length;
+		}
+		return PALETTE[slot];
+	}
+
+	private static int baseSlot(String lowercaseName) {
+		return Math.floorMod(lowercaseName.hashCode(), PALETTE.length);
 	}
 }

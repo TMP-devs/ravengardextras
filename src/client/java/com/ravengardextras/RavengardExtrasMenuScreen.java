@@ -1,6 +1,7 @@
 package com.ravengardextras;
 
 import com.ravengardextras.gearhighlighter.GearHighlighterScreen;
+import com.ravengardextras.ping.PingScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -41,6 +42,13 @@ public class RavengardExtrasMenuScreen extends Screen {
 				new ItemStack(Items.GOLDEN_HELMET),
 				() -> RavengardExtrasClient.CONFIG.enabled,
 				() -> Minecraft.getInstance().gui.setScreen(new GearHighlighterScreen(this, RavengardExtrasClient.CONFIG))));
+		rowY += 44;
+
+		this.addRenderableWidget(new FeatureButton(px + 12, rowY, PANEL_WIDTH - 24, 36,
+				"Party Ping", "Ping blocks for your party (Z)",
+				new ItemStack(Items.ENDER_EYE),
+				() -> RavengardExtrasClient.PING_CONFIG.enabled,
+				() -> Minecraft.getInstance().gui.setScreen(new PingScreen(this, RavengardExtrasClient.PING_CONFIG))));
 		rowY += 44;
 
 		this.addRenderableWidget(Button.builder(Component.literal("Close"), button -> this.onClose())

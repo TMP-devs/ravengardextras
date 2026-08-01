@@ -2,6 +2,10 @@ package com.ravengardextras;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.ravengardextras.gearhighlighter.GearHighlighterConfig;
+import com.ravengardextras.ping.PingChatListener;
+import com.ravengardextras.ping.PingConfig;
+import com.ravengardextras.ping.PingKeyHandler;
+import com.ravengardextras.ping.PingRenderer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -12,19 +16,30 @@ import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
 
 public class RavengardExtrasClient implements ClientModInitializer {
 	public static GearHighlighterConfig CONFIG;
+	public static PingConfig PING_CONFIG;
 	private static KeyMapping openMenuKey;
+	private static KeyMapping pingKey;
 	private static volatile boolean menuOpenRequested = false;
 
 	@Override
 	public void onInitializeClient() {
 		CONFIG = GearHighlighterConfig.load();
+		PING_CONFIG = PingConfig.load();
 
 		openMenuKey = KeyMappingHelper.registerKeyMapping(
 				new KeyMapping("key.ravengardextras.open_menu", InputConstants.UNKNOWN.getValue(), KeyMapping.Category.MISC));
+		pingKey = KeyMappingHelper.registerKeyMapping(
+				new KeyMapping("key.ravengardextras.ping", InputConstants.KEY_Z, KeyMapping.Category.MISC));
+
+		PingChatListener.register();
+		PingRenderer.register();
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while (openMenuKey.consumeClick()) {
 				menuOpenRequested = true;
+			}
+			while (pingKey.consumeClick()) {
+				PingKeyHandler.onPingKey(client);
 			}
 			// Deferred to end-of-tick so a chat screen's own close (which happens
 			// right after a command is sent) can never race with and undo this.

@@ -13,9 +13,10 @@ import net.minecraft.world.item.Items;
 /** Feature list for the mod, styled as a small panel. Currently just Gear Highlighter; more rows slot in later. */
 public class RavengardExtrasMenuScreen extends Screen {
 	private static final int PANEL_WIDTH = 240;
-	private static final int PANEL_HEIGHT = 164;
+	private static final int PANEL_HEIGHT = 192;
 
 	private final Screen parent;
+	private int comingSoonY;
 
 	public RavengardExtrasMenuScreen(Screen parent) {
 		super(Component.literal("RavengardExtras"));
@@ -42,6 +43,9 @@ public class RavengardExtrasMenuScreen extends Screen {
 				() -> RavengardExtrasClient.CONFIG.enabled,
 				() -> Minecraft.getInstance().gui.setScreen(new GearHighlighterScreen(this, RavengardExtrasClient.CONFIG))));
 		rowY += 44;
+
+		this.comingSoonY = rowY;
+		rowY += 30;
 
 		this.addRenderableWidget(Button.builder(Component.literal("Close"), button -> this.onClose())
 				.bounds(px + PANEL_WIDTH / 2 - 40, py + PANEL_HEIGHT - 40, 80, 18).build());
@@ -75,7 +79,27 @@ public class RavengardExtrasMenuScreen extends Screen {
 			cursorX += this.font.width(letter);
 		}
 
+		drawComingSoonCard(graphics, px, x1);
 		drawCredit(graphics, px, py, x1, y1);
+	}
+
+	private void drawComingSoonCard(GuiGraphicsExtractor graphics, int px, int x1) {
+		int cardX0 = px + 12;
+		int cardX1 = x1 - 12;
+		int cardY0 = this.comingSoonY;
+		int cardY1 = cardY0 + 24;
+
+		graphics.fill(cardX0, cardY0, cardX1, cardY1, 0xFF2A2A38);
+		graphics.fill(cardX0, cardY0, cardX1, cardY0 + 1, 0xFF4A4A5A);
+		graphics.fill(cardX0, cardY1 - 1, cardX1, cardY1, 0xFF4A4A5A);
+		graphics.fill(cardX0, cardY0, cardX0 + 1, cardY1, 0xFF4A4A5A);
+		graphics.fill(cardX1 - 1, cardY0, cardX1, cardY1, 0xFF4A4A5A);
+
+		String text = "More features coming!";
+		int textWidth = this.font.width(text);
+		int textX = px + (x1 - px) / 2 - textWidth / 2;
+		int textY = cardY0 + (24 - this.font.lineHeight) / 2;
+		graphics.text(this.font, text, textX, textY, 0xFF9A9AAA);
 	}
 
 	private void drawCredit(GuiGraphicsExtractor graphics, int px, int py, int x1, int y1) {

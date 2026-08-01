@@ -20,12 +20,12 @@ public class GearHighlighterConfig {
 	private static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("ravengardextras.json");
 
 	public boolean enabled = true;
-	public long tier1Threshold = 50;
-	public int tier1Color = 0xFF55FF55; // ARGB, default green
-	public long tier2Threshold = 200;
-	public int tier2Color = 0xFFFF5555; // ARGB, default red
-	public long tier3Threshold = 1000;
-	public int tier3Color = 0xFFFFD700; // ARGB, default gold
+	public long tier1Threshold = 8;
+	public int tier1Color = 0xFF55FFFF; // ARGB, default light blue
+	public long tier2Threshold = 12;
+	public int tier2Color = 0xFFFFFF55; // ARGB, default yellow
+	public long tier3Threshold = 18;
+	public int tier3Color = RAINBOW; // default RGB/rainbow
 
 	public static GearHighlighterConfig load() {
 		if (Files.exists(PATH)) {

@@ -4,7 +4,8 @@
 	"package": "com.ravengardextras.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"AbstractContainerScreenMixin"
+		"AbstractContainerScreenMixin",
+		"ItemCooldownsMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

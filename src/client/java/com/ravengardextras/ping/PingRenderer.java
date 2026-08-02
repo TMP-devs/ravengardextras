@@ -18,15 +18,25 @@ import java.util.List;
  * Draws each active ping as a camera-facing diamond above the pinged block (a flashing
  * red circle for alerts), plus a "Name (Nm)" label. Both use see-through render paths
  * (the same mechanism as nametags) so they are visible through walls. The shape's world
- * size grows with distance so it reads at range but never fills the screen up close.
+ * size grows with the square root of distance (not linearly) so it stays readable at
+ * range without fully cancelling perspective — far pings still look smaller than close
+ * ones, giving a sense of depth instead of every ping reading as the same flat size.
+ * Marks (permanent) draw as a bold X-cross instead of a diamond so they read apart
+ * from temp pings at a glance even at a distance, rather than relying on a subtle
+ * hollow-vs-filled difference that's easy to miss.
  */
 public final class PingRenderer {
-	private static final float HALF_WIDTH = 0.35F;
-	private static final float HALF_HEIGHT = 0.5F;
-	private static final float EDGE = 0.08F;
+	// Equal width/height so the diamond reads as a "perfect" diamond (a square on its
+	// side) rather than an elongated rhombus - the X-cross shares these corners too,
+	// so keeping them equal is also what stops the cross from looking stretched tall.
+	private static final float HALF_WIDTH = 0.42F;
+	private static final float HALF_HEIGHT = 0.42F;
+	private static final float EDGE = 0.11F;
+	private static final float CROSS_HALF_THICKNESS = 0.11F;
 	/** Diamond center floats this far above the bottom of the pinged block (shared with aim-to-clear). */
 	public static final float HOVER = 1.7F;
-	private static final float SCALE_PER_BLOCK = 0.08F;
+	private static final float SCALE_PER_SQRT_BLOCK = 0.14F;
+	private static final float MAX_SCALE = 5.0F;
 	private static final long FADE_MILLIS = 1000;
 	private static final int ALERT_COLOR = 0xFFFF4040;
 	private static final long FLASH_CYCLE_MILLIS = 500;
@@ -63,7 +73,7 @@ public final class PingRenderer {
 			double z = ping.pos().getZ() + 0.5 - cameraPos.z;
 			double distance = Math.sqrt(x * x + y * y + z * z);
 
-			float scale = Mth.clamp((float) distance * SCALE_PER_BLOCK, 0.25F, 12.0F);
+			float scale = Mth.clamp((float) Math.sqrt(distance) * SCALE_PER_SQRT_BLOCK, 0.25F, MAX_SCALE);
 			if (!ping.permanent()) {
 				long remaining = duration - (now - ping.createdAtMillis());
 				if (remaining < FADE_MILLIS) {
@@ -76,9 +86,9 @@ public final class PingRenderer {
 
 			boolean alert = ping.kind() == PingManager.Kind.ALERT;
 			int color = alert ? ALERT_COLOR : PingColors.colorFor(ping.sender());
-			// Marks are a darker shade of the player's color so the two kinds read
-			// apart at a glance; alerts flash between full and dim red.
-			int shapeColor = ping.permanent() ? scaleBrightness(color, 0.55F) : color;
+			// Marks draw hollow (rim only, see drawDiamond's filled flag) so they read
+			// apart from temp pings at a glance; alerts flash between full and dim red.
+			int shapeColor = color;
 			if (alert) {
 				float phase = (now % FLASH_CYCLE_MILLIS) / (float) FLASH_CYCLE_MILLIS;
 				shapeColor = scaleBrightness(color, 0.4F + 0.6F * (0.5F + 0.5F * Mth.sin(phase * Mth.TWO_PI)));
@@ -87,11 +97,12 @@ public final class PingRenderer {
 			poseStack.pushPose();
 			poseStack.translate(x, y, z);
 
-			// Label below the diamond. submitNameTag applies the camera billboard and its
+			// Label above the shape. submitNameTag applies the camera billboard and its
 			// own 0.025 text scale internally, so it gets the pose *before* our billboard
 			// rotation. It uses its own scale, clamped so the text never drops below
-			// normal nametag size up close (the diamond's scale shrinks toward zero).
-			// The attachment y compensates submitNameTag's +0.5 offset.
+			// normal nametag size up close (the shape's scale shrinks toward zero).
+			// submitNameTag also nudges the label up by its own +0.5, so our offset only
+			// needs to add a small gap above the shape, not the shape's full half-height twice.
 			float labelScale = Math.max(1.0F, scale);
 			String labelText = alert
 					? possessive(ping.sender()) + " Alert"
@@ -101,17 +112,18 @@ public final class PingRenderer {
 			poseStack.pushPose();
 			poseStack.scale(labelScale, labelScale, labelScale);
 			context.submitNodeCollector().submitNameTag(
-					poseStack, new Vec3(0.0, -(HALF_HEIGHT * scale) / labelScale - 0.8, 0.0), 0, label,
+					poseStack, new Vec3(0.0, (HALF_HEIGHT * scale) / labelScale - 0.2, 0.0), 0, label,
 					true, LightCoordsUtil.FULL_BRIGHT, camera);
 			poseStack.popPose();
 
 			poseStack.scale(scale, scale, scale);
 			poseStack.mulPose(camera.orientation);
 			final int finalShapeColor = shapeColor;
+			boolean permanent = ping.permanent();
 			context.submitNodeCollector().submitCustomGeometry(
 					poseStack, RenderTypes.textBackgroundSeeThrough(),
-					alert
-							? (pose, buffer) -> drawCircle(pose, buffer, finalShapeColor)
+					alert ? (pose, buffer) -> drawCircle(pose, buffer, finalShapeColor)
+							: permanent ? (pose, buffer) -> drawCross(pose, buffer, finalShapeColor)
 							: (pose, buffer) -> drawDiamond(pose, buffer, finalShapeColor));
 			poseStack.popPose();
 		}
@@ -126,7 +138,7 @@ public final class PingRenderer {
 	}
 
 	private static void drawDiamond(PoseStack.Pose pose, VertexConsumer buffer, int color) {
-		int fill = (color & 0x00FFFFFF) | 0xB0000000;
+		int fill = (color & 0x00FFFFFF) | 0xE6000000;
 
 		// Center fill, both windings so it can't be culled away.
 		quad(pose, buffer, fill,
@@ -143,9 +155,27 @@ public final class PingRenderer {
 		edge(pose, buffer, color, -HALF_WIDTH, 0.0F, 0.0F, HALF_HEIGHT, -ow, 0.0F, 0.0F, oh);
 	}
 
+	/** Bold X-cross for marks: two thick diagonal bars, always fully colored (never hollow). */
+	private static void drawCross(PoseStack.Pose pose, VertexConsumer buffer, int color) {
+		bar(pose, buffer, color, -HALF_WIDTH, -HALF_HEIGHT, HALF_WIDTH, HALF_HEIGHT, CROSS_HALF_THICKNESS);
+		bar(pose, buffer, color, -HALF_WIDTH, HALF_HEIGHT, HALF_WIDTH, -HALF_HEIGHT, CROSS_HALF_THICKNESS);
+	}
+
+	/** A thick line segment from (ax,ay) to (bx,by), double-sided so it can't be culled away. */
+	private static void bar(PoseStack.Pose pose, VertexConsumer buffer, int color,
+	                        float ax, float ay, float bx, float by, float halfThickness) {
+		float dx = bx - ax;
+		float dy = by - ay;
+		float len = Mth.sqrt(dx * dx + dy * dy);
+		float px = -dy / len * halfThickness;
+		float py = dx / len * halfThickness;
+		quad(pose, buffer, color, ax + px, ay + py, bx + px, by + py, bx - px, by - py, ax - px, ay - py);
+		quad(pose, buffer, color, ax - px, ay - py, bx - px, by - py, bx + px, by + py, ax + px, ay + py);
+	}
+
 	/** A ring with a translucent fill, same visual language as the diamond. */
 	private static void drawCircle(PoseStack.Pose pose, VertexConsumer buffer, int color) {
-		int fill = (color & 0x00FFFFFF) | 0xB0000000;
+		int fill = (color & 0x00FFFFFF) | 0xD0000000;
 		float outer = CIRCLE_RADIUS + CIRCLE_EDGE;
 		for (int i = 0; i < CIRCLE_SEGMENTS; i++) {
 			float a1 = (float) (i * Math.TAU / CIRCLE_SEGMENTS);

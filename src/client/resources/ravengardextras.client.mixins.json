@@ -5,7 +5,8 @@
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"AbstractContainerScreenAccessor",
-		"AbstractContainerScreenMixin"
+		"AbstractContainerScreenMixin",
+		"SlotLockerMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

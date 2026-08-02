@@ -16,15 +16,13 @@ import java.util.concurrent.ConcurrentHashMap;
  * so clients observing the same pings resolve clashes identically.
  */
 public final class PingColors {
+	// Only ever three players in practice, so keep the palette small and maximally
+	// distinct: bright cyan, neon green, and hot pink read clearly against grass,
+	// stone, sky, or cave alike.
 	private static final int[] PALETTE = {
-			0xFF5577FF, // blue
-			0xFFFFFF55, // yellow
-			0xFF55FF55, // green
-			0xFFFF5555, // red
-			0xFFAA55FF, // purple
-			0xFFFFAA00, // orange
-			0xFF55FFFF, // cyan
-			0xFFFF55FF, // pink
+			0xFF00FFFF, // cyan
+			0xFF39FF14, // neon green
+			0xFFFF3399, // hot pink
 	};
 
 	/** Lowercased name -> color, for the lifetime of the connection. */

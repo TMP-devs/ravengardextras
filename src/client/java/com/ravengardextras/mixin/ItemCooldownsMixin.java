@@ -1,6 +1,8 @@
 package com.ravengardextras.mixin;
 
+import com.ravengardextras.cooldown.CooldownDebugOverlay;
 import com.ravengardextras.cooldown.RavengardCooldownAccess;
+import com.ravengardextras.debug.DebugFile;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemCooldowns;
 import org.spongepowered.asm.mixin.Mixin;
@@ -11,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,6 +33,12 @@ public abstract class ItemCooldownsMixin implements RavengardCooldownAccess {
 	@Inject(method = "onCooldownStarted", at = @At("HEAD"))
 	private void ravengardextras$onStart(Identifier cooldownGroup, int duration, CallbackInfo ci) {
 		ravengardextras$endTicks.put(cooldownGroup, tickCount + duration);
+		// Auto-capture the exact moment any cooldown begins, so activating an ability is logged
+		// without having to run a command during the brief cooldown window.
+		if (CooldownDebugOverlay.enabled) {
+			DebugFile.section("COOLDOWN START", List.of(
+					"group=" + cooldownGroup + "  duration=" + duration + " ticks  (" + (duration / 20.0F) + "s)"));
+		}
 	}
 
 	@Inject(method = "onCooldownEnded", at = @At("HEAD"))

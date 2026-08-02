@@ -36,4 +36,11 @@ class DoubleTapTest {
 		assertFalse(tap.tap(1_600));
 		assertTrue(tap.tap(1_900));
 	}
+
+	@Test
+	void firstTapAtTimeZeroWorksCorrectly() {
+		DoubleTap tap = new DoubleTap(400);
+		assertFalse(tap.tap(0));
+		assertTrue(tap.tap(300));
+	}
 }

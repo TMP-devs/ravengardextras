@@ -8,6 +8,7 @@ package com.ravengardextras.ping;
 public final class DoubleTap {
 	private final long windowMillis;
 	private long lastTapMillis;
+	private boolean hasTap;
 
 	public DoubleTap(long windowMillis) {
 		this.windowMillis = windowMillis;
@@ -15,8 +16,13 @@ public final class DoubleTap {
 
 	/** Records a tap at nowMillis; true iff it completed a double-tap. */
 	public boolean tap(long nowMillis) {
-		boolean second = lastTapMillis != 0 && nowMillis - lastTapMillis <= windowMillis;
-		lastTapMillis = second ? 0 : nowMillis;
+		boolean second = hasTap && nowMillis - lastTapMillis <= windowMillis;
+		if (second) {
+			hasTap = false;
+		} else {
+			lastTapMillis = nowMillis;
+			hasTap = true;
+		}
 		return second;
 	}
 }

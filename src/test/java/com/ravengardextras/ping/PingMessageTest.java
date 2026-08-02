@@ -31,6 +31,15 @@ class PingMessageTest {
 	}
 
 	@Test
+	void alertWithLabelSuffixDiscardsTheLabel() {
+		// The COORDS regex accepts a trailing "(label)" on any type; only MARK should keep it.
+		PingMessage.Parsed parsed = PingMessage.parse("Scrolls: RGE-ALERT @ 1, 2, 3 (SomeLabel)");
+		assertNotNull(parsed);
+		assertEquals(PingMessage.Type.ALERT, parsed.type());
+		assertNull(parsed.label());
+	}
+
+	@Test
 	void pingAndMarkStillParse() {
 		PingMessage.Parsed ping = PingMessage.parse("Scrolls: RGE-PING @ 1, 2, 3");
 		assertNotNull(ping);

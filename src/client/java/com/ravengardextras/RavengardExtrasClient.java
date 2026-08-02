@@ -30,6 +30,7 @@ public class RavengardExtrasClient implements ClientModInitializer {
 				new KeyMapping("key.ravengardextras.open_menu", InputConstants.UNKNOWN.getValue(), KeyMapping.Category.MISC));
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			com.ravengardextras.debug.CooldownWatcher.tick();
 			while (openMenuKey.consumeClick()) {
 				menuOpenRequested = true;
 			}

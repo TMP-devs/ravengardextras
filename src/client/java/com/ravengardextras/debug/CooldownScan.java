@@ -53,12 +53,12 @@ public final class CooldownScan {
 			if (onCooldown) {
 				float pct = cooldowns.getCooldownPercent(stack, 0.0F);
 				float seconds = access.ravengardextras$remainingTicks(group) / 20.0F;
-				status = String.format("ON COOLDOWN  %.0f%%  %.1fs", pct * 100.0F, seconds);
+				status = String.format("ON COOLDOWN %.0f%% %.1fs", pct * 100.0F, seconds);
 			} else {
 				status = "ready";
 			}
-			out.add(String.format("slot %d  %s  %s  [%s]",
-					i, stack.getHoverName().getString(), status, group));
+			out.add(String.format("slot %d  [%s]  cdGroup=%s", i, status, group));
+			out.add("  " + ItemDump.signature(stack));
 			listed++;
 		}
 

@@ -1,10 +1,12 @@
 # Run Tools — overnight build notes (validate in the morning)
 
 Branch: `feature/run-tools`. Built + unit-tested + jar deployed to the Modrinth
-"Fabric 26.2" test profile. Three features, all client-side only.
+"Fabric 26.2" test profile. Two features, all client-side only.
 
-Open the mod menu (`/rge` or `/ravengardextras`) — three new rows sit under Gear
-Highlighter: **Crown Calculator**, **XP Calculator**, **Stronghold Alert**.
+(A stronghold sound alert was also built but removed — that already exists.)
+
+Open the mod menu (`/rge` or `/ravengardextras`) — two new rows sit under Gear
+Highlighter: **Crown Calculator** and **XP Calculator**.
 
 ## 1. Crown Calculator  (net Crowns per run)
 - On entering a run it snapshots the total Crown value of your **whole inventory**
@@ -34,21 +36,10 @@ counting, paste me one exact gain line (e.g. how a mob kill reads) and I'll tune
 regex. If it counts *too much*, the server is probably showing a running total I
 didn't recognise as a bar — again, send a sample.
 
-## 3. Stronghold Alert  (dragon growl)
-- Plays `ENTITY_ENDER_DRAGON_GROWL` at medium volume when chat announces the
-  stronghold opened. 5-second cooldown so repeated server lines don't stack it.
-- Settings row → on/off, a **Volume** slider (default 60%), and a **Test growl**
-  button so you can hear it without waiting for a stronghold.
-
-**Assumption to check:** the trigger is any line containing "stronghold" + an
-open/unlock/unseal/breach word (case-insensitive). Sealed/closed/"entering" lines are
-ignored. If the real announcement uses different wording and the growl doesn't fire,
-send me the exact line and I'll widen `StrongholdAlertMatcher`.
-
 ## What I could and couldn't verify
 - ✅ Compiles against the real 26.2 mappings; `./gradlew build test` green.
-- ✅ Pure parser logic (XP + stronghold matching) is unit-tested.
-- ❌ I could not launch the game and play a run, so the three "Assumption to check"
+- ✅ Pure parser logic (XP parsing) is unit-tested.
+- ❌ I could not launch the game and play a run, so the "Assumption to check"
   items above — chat/action-bar wording and the dungeon scoreboard name — are my best
   guesses from the existing code. Everything is written to be easy to retune once you
   confirm the real strings.
@@ -57,9 +48,7 @@ send me the exact line and I'll widen `StrongholdAlertMatcher`.
 - `runtools/RunToolsConfig.java` — settings (`config/ravengardextras-runtools.json`)
 - `runtools/RavengardRunDetector.java` — dungeon detection (scoreboard)
 - `runtools/RunTracker.java` — baseline snapshot + net Crowns + XP tally + exit summary
-- `runtools/XpParser.java`, `StrongholdAlertMatcher.java` — pure, unit-tested
-- `runtools/StrongholdAlert.java` — sound + cooldown
+- `runtools/XpParser.java` — pure, unit-tested
 - `runtools/RunChatListener.java` — reads chat/action bar
 - `runtools/RunHudRenderer.java` — the top-left HUD
-- `runtools/StrongholdAlertScreen.java` — the alert settings sub-screen
-- menu row + client wiring in `RavengardExtrasMenuScreen` / `RavengardExtrasClient`
+- menu rows + client wiring in `RavengardExtrasMenuScreen` / `RavengardExtrasClient`

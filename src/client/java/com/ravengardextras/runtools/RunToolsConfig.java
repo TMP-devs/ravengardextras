@@ -12,9 +12,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Settings for the three "run tools" delivered together: the Crown Calculator and
- * XP Calculator (a per-run HUD) and the Stronghold sound alert. Kept in one file
- * ({@code ravengardextras-runtools.json}) because they share the run lifecycle.
+ * Settings for the "run tools": the Crown Calculator and XP Calculator, a per-run
+ * HUD. Kept in one file ({@code ravengardextras-runtools.json}) because they share
+ * the run lifecycle.
  */
 public class RunToolsConfig {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -24,10 +24,6 @@ public class RunToolsConfig {
 	public boolean crownCalcEnabled = true;
 	/** XP Calculator: read XP gains from chat/action bar and total them for the run. */
 	public boolean xpCalcEnabled = true;
-	/** Stronghold alert: play a dragon growl when chat announces the stronghold opened. */
-	public boolean strongholdAlertEnabled = true;
-	/** Growl loudness, 0.0–1.0. Default is a medium 0.6. */
-	public float strongholdVolume = 0.6F;
 
 	public static RunToolsConfig load() {
 		if (Files.exists(PATH)) {

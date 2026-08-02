@@ -6,7 +6,6 @@ import com.ravengardextras.runtools.RunChatListener;
 import com.ravengardextras.runtools.RunHudRenderer;
 import com.ravengardextras.runtools.RunToolsConfig;
 import com.ravengardextras.runtools.RunTracker;
-import com.ravengardextras.runtools.StrongholdAlert;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -19,7 +18,6 @@ public class RavengardExtrasClient implements ClientModInitializer {
 	public static GearHighlighterConfig CONFIG;
 	public static RunToolsConfig RUN_TOOLS_CONFIG;
 	public static RunTracker RUN_TRACKER;
-	public static StrongholdAlert STRONGHOLD_ALERT;
 	private static KeyMapping openMenuKey;
 	private static volatile boolean menuOpenRequested = false;
 
@@ -28,8 +26,7 @@ public class RavengardExtrasClient implements ClientModInitializer {
 		CONFIG = GearHighlighterConfig.load();
 		RUN_TOOLS_CONFIG = RunToolsConfig.load();
 		RUN_TRACKER = new RunTracker(RUN_TOOLS_CONFIG);
-		STRONGHOLD_ALERT = new StrongholdAlert(RUN_TOOLS_CONFIG);
-		RunChatListener.register(RUN_TRACKER, STRONGHOLD_ALERT, RUN_TOOLS_CONFIG);
+		RunChatListener.register(RUN_TRACKER, RUN_TOOLS_CONFIG);
 		RunHudRenderer.register(RUN_TRACKER, RUN_TOOLS_CONFIG);
 
 		openMenuKey = KeyMappingHelper.registerKeyMapping(

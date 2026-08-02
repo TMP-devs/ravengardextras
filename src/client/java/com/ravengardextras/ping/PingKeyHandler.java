@@ -47,6 +47,8 @@ public final class PingKeyHandler {
 	private static final DoubleTap PING_DOUBLE_TAP = new DoubleTap(DOUBLE_TAP_WINDOW_MILLIS);
 	/** Whether the previous ping-key tap actually placed a ping (not cooldown/range blocked). */
 	private static boolean lastTapPinged;
+	/** Where that ping landed, as an upgradeToAlert fallback if the second tap's pick misses. */
+	private static BlockPos lastPingPos;
 
 	private PingKeyHandler() {
 	}
@@ -80,30 +82,27 @@ public final class PingKeyHandler {
 		}
 		lastTapPinged = true;
 		BlockPos pos = blockHit.getBlockPos();
+		lastPingPos = pos;
 		PingManager.addPing(player.getName().getString(), pos);
 		broadcast(client, config, PingMessage.formatPing(pos.getX(), pos.getY(), pos.getZ()));
 	}
 
 	/**
 	 * Second tap of a double-tap: replaces the just-placed ping with an alert at
-	 * the block now under the crosshair (or the ping's own spot if that pick
-	 * fails). Exempt from the cooldown check - the first tap just passed it -
-	 * but refreshes the timestamp so a double-tap still counts as one use.
+	 * the block now under the crosshair, or at the first tap's own block if this
+	 * pick misses (e.g. the player looked at the sky). Uses the cached
+	 * {@link #lastPingPos} rather than re-querying {@link PingManager#pingOf} so
+	 * this still works if the party-chat echo of the first tap already re-keyed
+	 * the ping under a different display name (nickname servers). Exempt from
+	 * the cooldown check - the first tap just passed it - but refreshes the
+	 * timestamp so a double-tap still counts as one use.
 	 */
 	private static void upgradeToAlert(Minecraft client, PingConfig config, LocalPlayer player, long now) {
 		String name = player.getName().getString();
 		HitResult hit = player.pick(config.maxPingDistance, 1.0F, false);
-		BlockPos pos;
-		if (hit instanceof BlockHitResult blockHit && hit.getType() == HitResult.Type.BLOCK) {
-			pos = blockHit.getBlockPos();
-		} else {
-			PingManager.Ping existing = PingManager.pingOf(name);
-			if (existing == null) {
-				client.gui.hud.setOverlayMessage(Component.literal("No block in ping range"), false);
-				return;
-			}
-			pos = existing.pos();
-		}
+		BlockPos pos = hit instanceof BlockHitResult blockHit && hit.getType() == HitResult.Type.BLOCK
+				? blockHit.getBlockPos()
+				: lastPingPos;
 		lastPingMillis = now;
 		PingManager.addAlert(name, pos);
 		broadcast(client, config, PingMessage.formatAlert(pos.getX(), pos.getY(), pos.getZ()));

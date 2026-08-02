@@ -221,7 +221,7 @@ public class RavengardExtrasMenuScreen extends Screen {
 						() -> RavengardExtrasClient.RUN_TOOLS_CONFIG.crownCalcEnabled,
 						v -> { RavengardExtrasClient.RUN_TOOLS_CONFIG.crownCalcEnabled = v; RavengardExtrasClient.RUN_TOOLS_CONFIG.save(); },
 						null));
-				cards.add(new CardDef("xpcalc", "XP Calculator", "Total XP earned per run", "experimental",
+				cards.add(new CardDef("xpcalc", "XP Calculator", "Total XP earned per run",
 						new ItemStack(Items.EXPERIENCE_BOTTLE),
 						() -> RavengardExtrasClient.RUN_TOOLS_CONFIG.xpCalcEnabled,
 						v -> { RavengardExtrasClient.RUN_TOOLS_CONFIG.xpCalcEnabled = v; RavengardExtrasClient.RUN_TOOLS_CONFIG.save(); },

@@ -48,7 +48,7 @@ Per-run Crown and XP tallies on the HUD, summarised in chat when you escape.
 - **Crown Calculator** - net Crowns gained this run. A snapshot of your inventory is taken
   as you enter, so the gear you brought never counts and swapping a 5-Crown chestplate for
   a 10-Crown one reads `+5`, not `+10`. Worn armor and offhand are included
-- **XP Calculator** *(experimental)* - totals XP gains from chat and the action bar
+- **XP Calculator** - totals XP gains from chat and the action bar
 - Consumables you brought in count against the total when used, since the figure is net
   inventory value rather than loot collected
 

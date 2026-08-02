@@ -8,6 +8,9 @@ A new **Run** tab with per-run tallies, shown on the HUD and summarised in chat 
 - **Crown Calculator** - net Crowns gained, measured against a snapshot taken as you enter, so the gear you walked in with never counts and swapping an item up is worth the difference
 - **XP Calculator** *(experimental)* - totals XP gains from chat and the action bar, reset each run
 
+### 🐛 Fixes
+- Items worth exactly one Crown were valued at zero, because their lore reads "1 Crown" and the parser required the plural. They are now counted and highlighted correctly. The same fix makes Crown matching case-insensitive and stops lore like "2 Crownsmiths" being read as a value
+
 ## 0.2
 
 ### 🖥️ New Dashboard

@@ -15,13 +15,14 @@ import java.util.regex.Pattern;
  *   <li>{@code RGE-MARK @ x, y, z (Bandage)} - permanent mark labeled with an item name</li>
  *   <li>{@code RGE-MARK CLEAR @ x, y, z} - removes the sender's mark at that spot</li>
  *   <li>{@code RGE-MARK CLEAR} - removes all of the sender's marks</li>
+ *   <li>{@code RGE-ALERT @ x, y, z} - alert ping (double-tap), red flashing circle</li>
  * </ul>
  *
  * <p>Pure string logic, no Minecraft types.
  */
 public final class PingMessage {
 	private static final Pattern COORDS =
-			Pattern.compile("RGE-(PING|MARK) @ (-?\\d{1,8}), (-?\\d{1,8}), (-?\\d{1,8})( \\(([^()]{1,48})\\))?");
+			Pattern.compile("RGE-(PING|MARK|ALERT) @ (-?\\d{1,8}), (-?\\d{1,8}), (-?\\d{1,8})( \\(([^()]{1,48})\\))?");
 	private static final Pattern CLEAR_AT = Pattern.compile("RGE-MARK CLEAR @ (-?\\d{1,8}), (-?\\d{1,8}), (-?\\d{1,8})");
 	private static final Pattern CLEAR_ALL = Pattern.compile("RGE-MARK CLEAR(?! @)");
 	/** A player-name token directly followed by a chat separator ("Name:", "Name >", "Name »"). */
@@ -33,7 +34,7 @@ public final class PingMessage {
 	}
 
 	public enum Type {
-		PING, MARK, CLEAR_MARK, CLEAR_ALL_MARKS
+		PING, MARK, ALERT, CLEAR_MARK, CLEAR_ALL_MARKS
 	}
 
 	/** Coordinates are meaningless (zero) for CLEAR_ALL_MARKS; label is null unless type is MARK with a name. */
@@ -42,6 +43,10 @@ public final class PingMessage {
 
 	public static String formatPing(int x, int y, int z) {
 		return "RGE-PING @ " + x + ", " + y + ", " + z;
+	}
+
+	public static String formatAlert(int x, int y, int z) {
+		return "RGE-ALERT @ " + x + ", " + y + ", " + z;
 	}
 
 	public static String formatMark(int x, int y, int z, String label) {
@@ -103,7 +108,11 @@ public final class PingMessage {
 				return null;
 			}
 			try {
-				Type type = coords.group(1).equals("MARK") ? Type.MARK : Type.PING;
+				Type type = switch (coords.group(1)) {
+					case "MARK" -> Type.MARK;
+					case "ALERT" -> Type.ALERT;
+					default -> Type.PING;
+				};
 				String label = type == Type.MARK ? coords.group(6) : null;
 				return new Parsed(sender, type,
 						Integer.parseInt(coords.group(2)),

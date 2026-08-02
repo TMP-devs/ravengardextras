@@ -32,6 +32,10 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	testImplementation platform("org.junit:junit-bom:5.11.3")
+	testImplementation "org.junit.jupiter:junit-jupiter"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
 
 sourceSets {
@@ -39,12 +43,6 @@ sourceSets {
 		compileClasspath += sourceSets.client.output + sourceSets.client.compileClasspath
 		runtimeClasspath += sourceSets.client.output + sourceSets.client.runtimeClasspath
 	}
-}
-
-dependencies {
-	testImplementation platform("org.junit:junit-bom:5.11.3")
-	testImplementation "org.junit.jupiter:junit-jupiter"
-	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
 
 tasks.named("test") {

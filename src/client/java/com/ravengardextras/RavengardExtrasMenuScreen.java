@@ -142,10 +142,16 @@ public class RavengardExtrasMenuScreen extends Screen {
 	}
 
 	/** A feature row: header info plus an optional body builder (x, y) -> height for expandable cards. */
-	private record CardDef(String id, String label, String description, ItemStack icon,
+	private record CardDef(String id, String label, String description, String badge, ItemStack icon,
 	                        java.util.function.BooleanSupplier enabledSupplier,
 	                        java.util.function.Consumer<Boolean> toggleAction,
 	                        BiFunction<Integer, Integer, Integer> bodyBuilder) {
+		CardDef(String id, String label, String description, ItemStack icon,
+		        java.util.function.BooleanSupplier enabledSupplier,
+		        java.util.function.Consumer<Boolean> toggleAction,
+		        BiFunction<Integer, Integer, Integer> bodyBuilder) {
+			this(id, label, description, null, icon, enabledSupplier, toggleAction, bodyBuilder);
+		}
 	}
 
 	private List<CardDef> cardsFor(DashboardTab tab) {
@@ -156,6 +162,11 @@ public class RavengardExtrasMenuScreen extends Screen {
 						new ItemStack(Items.GOLDEN_HELMET),
 						() -> this.config.enabled, v -> { this.config.enabled = v; this.config.save(); },
 						this::buildGearBody));
+				cards.add(new CardDef("gearrules", "Gear Highlighter 2", "Build your own stat/class highlight cards", "(experimental)",
+						new ItemStack(Items.GOLDEN_HELMET),
+						() -> RavengardExtrasClient.GEAR_RULES.enabled,
+						v -> { RavengardExtrasClient.GEAR_RULES.enabled = v; RavengardExtrasClient.GEAR_RULES.save(); },
+						this::buildGearRulesBody));
 				cards.add(new CardDef("heal", "Heal Highlighter", "Tint healing items green",
 						new ItemStack(Items.GOLDEN_APPLE),
 						() -> this.config.healEnabled, v -> { this.config.healEnabled = v; this.config.save(); },
@@ -284,6 +295,15 @@ public class RavengardExtrasMenuScreen extends Screen {
 		this.config.healColor = 0x50000000 | (this.healWashColor & 0x00FFFFFF);
 		this.config.healUncheckedItems = new HashSet<>(this.healUncheckedPending);
 		this.config.save();
+	}
+
+	// ============================== Highlight Rules body ==============================
+
+	private int buildGearRulesBody(int x, int y) {
+		int width = this.contentWidth - 28;
+		this.addRenderableWidget(new PanelButtonWidget(x, y, Math.min(width, 160), 20, "Open Rule Editor",
+				() -> Minecraft.getInstance().gui.setScreen(new com.ravengardextras.gearrules.ui.GearRulesScreen(this))));
+		return 24;
 	}
 
 	// ============================== Party Ping body ==============================

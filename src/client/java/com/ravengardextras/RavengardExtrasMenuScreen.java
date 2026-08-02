@@ -1,6 +1,7 @@
 package com.ravengardextras;
 
 import com.ravengardextras.gearhighlighter.GearHighlighterScreen;
+import com.ravengardextras.runtools.StrongholdAlertScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -13,7 +14,7 @@ import net.minecraft.world.item.Items;
 /** Feature list for the mod, styled as a small panel. Currently just Gear Highlighter; more rows slot in later. */
 public class RavengardExtrasMenuScreen extends Screen {
 	private static final int PANEL_WIDTH = 240;
-	private static final int PANEL_HEIGHT = 164;
+	private static final int PANEL_HEIGHT = 260;
 
 	private final Screen parent;
 
@@ -41,6 +42,36 @@ public class RavengardExtrasMenuScreen extends Screen {
 				new ItemStack(Items.GOLDEN_HELMET),
 				() -> RavengardExtrasClient.CONFIG.enabled,
 				() -> Minecraft.getInstance().gui.setScreen(new GearHighlighterScreen(this, RavengardExtrasClient.CONFIG))));
+		rowY += 44;
+
+		// Crown Calculator — click toggles on/off in place; the status dot tracks it.
+		this.addRenderableWidget(new FeatureButton(px + 12, rowY, PANEL_WIDTH - 24, 36,
+				"Crown Calculator", "Net Crowns gained per run",
+				new ItemStack(Items.GOLD_INGOT),
+				() -> RavengardExtrasClient.RUN_TOOLS_CONFIG.crownCalcEnabled,
+				() -> {
+					RavengardExtrasClient.RUN_TOOLS_CONFIG.crownCalcEnabled = !RavengardExtrasClient.RUN_TOOLS_CONFIG.crownCalcEnabled;
+					RavengardExtrasClient.RUN_TOOLS_CONFIG.save();
+				}));
+		rowY += 44;
+
+		// XP Calculator — click toggles on/off in place.
+		this.addRenderableWidget(new FeatureButton(px + 12, rowY, PANEL_WIDTH - 24, 36,
+				"XP Calculator", "Total XP earned per run",
+				new ItemStack(Items.EXPERIENCE_BOTTLE),
+				() -> RavengardExtrasClient.RUN_TOOLS_CONFIG.xpCalcEnabled,
+				() -> {
+					RavengardExtrasClient.RUN_TOOLS_CONFIG.xpCalcEnabled = !RavengardExtrasClient.RUN_TOOLS_CONFIG.xpCalcEnabled;
+					RavengardExtrasClient.RUN_TOOLS_CONFIG.save();
+				}));
+		rowY += 44;
+
+		// Stronghold Alert — opens a settings sub-screen (volume + test).
+		this.addRenderableWidget(new FeatureButton(px + 12, rowY, PANEL_WIDTH - 24, 36,
+				"Stronghold Alert", "Dragon growl when it opens",
+				new ItemStack(Items.DRAGON_HEAD),
+				() -> RavengardExtrasClient.RUN_TOOLS_CONFIG.strongholdAlertEnabled,
+				() -> Minecraft.getInstance().gui.setScreen(new StrongholdAlertScreen(this, RavengardExtrasClient.RUN_TOOLS_CONFIG))));
 		rowY += 44;
 
 		this.addRenderableWidget(Button.builder(Component.literal("Close"), button -> this.onClose())

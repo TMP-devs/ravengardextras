@@ -22,7 +22,7 @@ public class GearHighlighterConfig {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("ravengardextras.json");
 
-	public boolean enabled = true;
+	public boolean enabled = false;
 	public long tier1Threshold = 8;
 	public int tier1Color = 0xFF55FFFF; // ARGB, default light blue
 	public long tier2Threshold = 12;

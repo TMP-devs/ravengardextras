@@ -2,6 +2,7 @@ package com.ravengardextras;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.ravengardextras.gearhighlighter.GearHighlighterConfig;
+import com.ravengardextras.gearrules.GearRulesConfig;
 import com.ravengardextras.ping.PingChatListener;
 import com.ravengardextras.ping.PingConfig;
 import com.ravengardextras.ping.PingKeyHandler;
@@ -25,6 +26,7 @@ import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
 
 public class RavengardExtrasClient implements ClientModInitializer {
 	public static GearHighlighterConfig CONFIG;
+	public static GearRulesConfig GEAR_RULES;
 	public static PingConfig PING_CONFIG;
 	public static SlotLockerConfig SLOT_LOCKER_CONFIG;
 	/** Own section in the vanilla Controls screen; label comes from key.category.ravengardextras.main. */
@@ -39,6 +41,7 @@ public class RavengardExtrasClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		CONFIG = GearHighlighterConfig.load();
+		GEAR_RULES = GearRulesConfig.load();
 		PING_CONFIG = PingConfig.load();
 		SLOT_LOCKER_CONFIG = SlotLockerConfig.load();
 

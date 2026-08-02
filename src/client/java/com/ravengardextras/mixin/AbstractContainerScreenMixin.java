@@ -3,6 +3,7 @@ package com.ravengardextras.mixin;
 import com.ravengardextras.RavengardExtrasClient;
 import com.ravengardextras.gearhighlighter.CrownParser;
 import com.ravengardextras.gearhighlighter.GearHighlighterConfig;
+import com.ravengardextras.gearrules.GearRuleMatcher;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -24,9 +25,6 @@ public abstract class AbstractContainerScreenMixin extends Screen {
 
 	@Inject(method = "extractSlot", at = @At("TAIL"))
 	private void ravengardextras$extractSlot(GuiGraphicsExtractor guiGraphics, Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
-		if (!RavengardExtrasClient.CONFIG.enabled) {
-			return;
-		}
 		ItemStack stack = slot.getItem();
 		if (stack.isEmpty()) {
 			return;
@@ -35,14 +33,26 @@ public abstract class AbstractContainerScreenMixin extends Screen {
 			guiGraphics.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, RavengardExtrasClient.CONFIG.healColor);
 			return;
 		}
-		long crowns = CrownParser.findCrowns(stack);
-		if (crowns < 0) {
-			return;
+
+		int color = 0;
+		if (RavengardExtrasClient.CONFIG.enabled) {
+			long crowns = CrownParser.findCrowns(stack);
+			if (crowns >= 0) {
+				color = RavengardExtrasClient.CONFIG.colorFor(crowns);
+			}
 		}
-		int color = RavengardExtrasClient.CONFIG.colorFor(crowns);
+		// Experimental card-based rules only kick in when the classic tier system found no match,
+		// so both stay usable side by side until the old one is retired.
+		if (color == 0) {
+			color = GearRuleMatcher.colorFor(stack, RavengardExtrasClient.GEAR_RULES);
+		}
 		if (color == 0) {
 			return;
 		}
+		drawOutline(guiGraphics, slot, color);
+	}
+
+	private static void drawOutline(GuiGraphicsExtractor guiGraphics, Slot slot, int color) {
 		boolean rainbow = color == GearHighlighterConfig.RAINBOW;
 		if (rainbow) {
 			float hue = (System.currentTimeMillis() % 2000L) / 2000.0F;

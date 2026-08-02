@@ -1,7 +1,6 @@
 package com.ravengardextras.mixin;
 
 import com.ravengardextras.RavengardExtrasClient;
-import com.ravengardextras.gearhighlighter.CrownParser;
 import com.ravengardextras.gearhighlighter.GearHighlighterConfig;
 import com.ravengardextras.gearrules.GearRuleMatcher;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -34,18 +33,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
 			return;
 		}
 
-		int color = 0;
-		if (RavengardExtrasClient.CONFIG.enabled) {
-			long crowns = CrownParser.findCrowns(stack);
-			if (crowns >= 0) {
-				color = RavengardExtrasClient.CONFIG.colorFor(crowns);
-			}
-		}
-		// Experimental card-based rules only kick in when the classic tier system found no match,
-		// so both stay usable side by side until the old one is retired.
-		if (color == 0) {
-			color = GearRuleMatcher.colorFor(stack, RavengardExtrasClient.GEAR_RULES);
-		}
+		int color = GearRuleMatcher.colorFor(stack, RavengardExtrasClient.GEAR_RULES);
 		if (color == 0) {
 			return;
 		}

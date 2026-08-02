@@ -5,13 +5,14 @@ import com.ravengardextras.dashboard.DashboardColors;
 import com.ravengardextras.dashboard.DashboardTab;
 import com.ravengardextras.dashboard.FeatureCardWidget;
 import com.ravengardextras.dashboard.PanelButtonWidget;
+import com.ravengardextras.dashboard.ScrollState;
 import com.ravengardextras.dashboard.TabButtonWidget;
 import com.ravengardextras.gearhighlighter.GearHighlighterConfig;
 import com.ravengardextras.ping.PingColors;
 import com.ravengardextras.ping.PingConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
@@ -31,6 +32,8 @@ import java.util.function.BiFunction;
  * list, which is why every field a body needs to survive a rebuild (typed-but-
  * unsaved text, picked-but-unsaved colors) is a persisted instance field rather
  * than local state, and every EditBox uses setResponder to keep that field live.
+ * The card list itself is scrollable: it's built at natural (0-based) y first,
+ * then shifted into the viewport and clipped to whole rows in {@link #layoutScroll}.
  */
 public class RavengardExtrasMenuScreen extends Screen {
 	private static final int[] PRESET_COLORS = {
@@ -45,12 +48,6 @@ public class RavengardExtrasMenuScreen extends Screen {
 
 	private DashboardTab activeTab = DashboardTab.HIGHLIGHTERS;
 	private final Set<String> expandedCards = new HashSet<>();
-	private String statusError = "";
-
-	// --- Gear Highlighter pending state (persists across incidental rebuilds) ---
-	private final String[] gearThresholdText = new String[3];
-	private final int[] gearTierColors = new int[3];
-	private final EditBox[] gearThresholdBoxes = new EditBox[3];
 
 	// --- Heal Highlighter pending state ---
 	private int healWashColor;
@@ -60,6 +57,11 @@ public class RavengardExtrasMenuScreen extends Screen {
 	private int pingColorPreviewX;
 	private int pingColorPreviewY;
 
+	// --- Scrollable card list ---
+	private final ScrollState scroll = new ScrollState();
+	private final List<AbstractWidget> scrollableWidgets = new ArrayList<>();
+	private int scrollViewTop, scrollViewBottom;
+
 	private int guiX, guiY, guiWidth, guiHeight;
 	private int tabsX, tabsY, tabsWidth, tabsHeight;
 	private int contentX, contentY, contentWidth;
@@ -67,13 +69,6 @@ public class RavengardExtrasMenuScreen extends Screen {
 	public RavengardExtrasMenuScreen(Screen parent) {
 		super(Component.literal("RavengardExtras"));
 		this.parent = parent;
-
-		this.gearThresholdText[0] = Long.toString(this.config.tier1Threshold);
-		this.gearThresholdText[1] = Long.toString(this.config.tier2Threshold);
-		this.gearThresholdText[2] = Long.toString(this.config.tier3Threshold);
-		this.gearTierColors[0] = this.config.tier1Color;
-		this.gearTierColors[1] = this.config.tier2Color;
-		this.gearTierColors[2] = this.config.tier3Color;
 
 		this.healWashColor = this.config.healColor | 0xFF000000;
 		this.healUncheckedPending = new HashSet<>(this.config.healUncheckedItems);
@@ -97,11 +92,15 @@ public class RavengardExtrasMenuScreen extends Screen {
 		this.contentY = this.tabsY + this.tabsHeight + 12;
 		this.contentWidth = this.guiWidth - 36;
 
+		this.scrollViewTop = this.contentY;
+		this.scrollViewBottom = this.guiY + this.guiHeight - 40;
+
 		rebuild();
 	}
 
 	private void rebuild() {
 		this.clearWidgets();
+		this.scrollableWidgets.clear();
 
 		DashboardTab[] tabs = DashboardTab.values();
 		int gap = 8;
@@ -111,16 +110,17 @@ public class RavengardExtrasMenuScreen extends Screen {
 			this.addRenderableWidget(new TabButtonWidget(this.tabsX + i * (tabWidth + gap), this.tabsY, tabWidth, this.tabsHeight,
 					tab.label, () -> this.activeTab == tab, () -> {
 				this.activeTab = tab;
+				this.scroll.reset();
 				rebuild();
 			}));
 		}
 
-		int y = this.contentY;
+		int y = 0;
 		for (CardDef card : cardsFor(this.activeTab)) {
 			FeatureCardWidget header = new FeatureCardWidget(this.contentX, y, this.contentWidth, 44,
 					card.label, card.description, card.badge, card.icon, card.enabledSupplier, card.toggleAction,
 					card.bodyBuilder != null, () -> this.expandedCards.contains(card.id), () -> toggleExpand(card.id));
-			this.addRenderableWidget(header);
+			addScrollable(header);
 			y += 44;
 			if (card.bodyBuilder != null && this.expandedCards.contains(card.id)) {
 				y += 6;
@@ -130,8 +130,36 @@ public class RavengardExtrasMenuScreen extends Screen {
 			y += gap;
 		}
 
+		layoutScroll(y);
+
 		this.addRenderableWidget(new PanelButtonWidget(this.guiX + this.guiWidth / 2 - 40, this.guiY + this.guiHeight - 30, 80, 20,
 				"Close", this::onClose));
+	}
+
+	/** Adds a widget built at natural (0-based) y to the scrollable content set instead of directly to the screen. */
+	private <T extends AbstractWidget> T addScrollable(T widget) {
+		this.scrollableWidgets.add(widget);
+		this.addRenderableWidget(widget);
+		return widget;
+	}
+
+	/** Shifts every scrollable widget from natural y into the viewport, hiding any row that doesn't fully fit. */
+	private void layoutScroll(int contentHeight) {
+		int viewportHeight = this.scrollViewBottom - this.scrollViewTop;
+		this.scroll.clamp(contentHeight, viewportHeight);
+		int shift = this.scrollViewTop - this.scroll.offset();
+		for (AbstractWidget widget : this.scrollableWidgets) {
+			int newY = widget.getY() + shift;
+			widget.setY(newY);
+			widget.visible = newY >= this.scrollViewTop && newY + widget.getHeight() <= this.scrollViewBottom;
+		}
+	}
+
+	@Override
+	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+		this.scroll.nudge(scrollY);
+		rebuild();
+		return true;
 	}
 
 	private void toggleExpand(String id) {
@@ -158,11 +186,7 @@ public class RavengardExtrasMenuScreen extends Screen {
 		List<CardDef> cards = new ArrayList<>();
 		switch (tab) {
 			case HIGHLIGHTERS -> {
-				cards.add(new CardDef("gear", "Gear Highlighter", "Outline gear by Crown value", "(superseded)",
-						new ItemStack(Items.GOLDEN_HELMET),
-						() -> this.config.enabled, v -> { this.config.enabled = v; this.config.save(); },
-						this::buildGearBody));
-				cards.add(new CardDef("gearrules", "Gear Highlighter 2", "Build your own stat/class highlight cards", "(experimental)",
+				cards.add(new CardDef("gearrules", "Gear Highlighter", "Build your own stat/class highlight cards",
 						new ItemStack(Items.GOLDEN_HELMET),
 						() -> RavengardExtrasClient.GEAR_RULES.enabled,
 						v -> { RavengardExtrasClient.GEAR_RULES.enabled = v; RavengardExtrasClient.GEAR_RULES.save(); },
@@ -195,71 +219,6 @@ public class RavengardExtrasMenuScreen extends Screen {
 		return cards;
 	}
 
-	// ============================== Gear Highlighter body ==============================
-
-	private int buildGearBody(int x, int y) {
-		int width = this.contentWidth - 28;
-		int centerX = x + width / 2;
-		int rowY = y;
-		for (int tier = 0; tier < 3; tier++) {
-			int tierIndex = tier;
-			EditBox box = new EditBox(this.font, x, rowY, 110, 20, Component.literal("Tier " + (tier + 1) + " starts at"));
-			box.setValue(this.gearThresholdText[tier]);
-			box.setResponder(text -> this.gearThresholdText[tierIndex] = text);
-			this.gearThresholdBoxes[tier] = box;
-			this.addRenderableWidget(box);
-			rowY += 24;
-
-			addSwatchRow(centerX, rowY, this.gearTierColors[tier], color -> {
-				this.gearTierColors[tierIndex] = color;
-				rebuild();
-			});
-			rowY += 30;
-		}
-		rowY += 4;
-		this.addRenderableWidget(new PanelButtonWidget(x, rowY, 72, 20, "Save", this::saveGear));
-		rowY += 24;
-		return rowY - y;
-	}
-
-	private long[] gearClampedThresholds() {
-		long[] raw = new long[3];
-		long[] fallback = {this.config.tier1Threshold, this.config.tier2Threshold, this.config.tier3Threshold};
-		for (int tier = 0; tier < 3; tier++) {
-			try {
-				raw[tier] = Long.parseLong(this.gearThresholdText[tier].trim());
-			} catch (NumberFormatException e) {
-				raw[tier] = fallback[tier];
-			}
-		}
-		for (int tier = 1; tier < 3; tier++) {
-			if (raw[tier] < raw[tier - 1]) {
-				raw[tier] = raw[tier - 1];
-			}
-		}
-		return raw;
-	}
-
-	private void saveGear() {
-		for (String text : this.gearThresholdText) {
-			try {
-				Long.parseLong(text.trim());
-			} catch (NumberFormatException e) {
-				this.statusError = "Threshold must be a whole number";
-				return;
-			}
-		}
-		long[] clamped = gearClampedThresholds();
-		this.config.tier1Threshold = clamped[0];
-		this.config.tier2Threshold = clamped[1];
-		this.config.tier3Threshold = clamped[2];
-		this.config.tier1Color = this.gearTierColors[0];
-		this.config.tier2Color = this.gearTierColors[1];
-		this.config.tier3Color = this.gearTierColors[2];
-		this.config.save();
-		this.statusError = "";
-	}
-
 	// ============================== Heal Highlighter body ==============================
 
 	private int buildHealBody(int x, int y) {
@@ -274,7 +233,7 @@ public class RavengardExtrasMenuScreen extends Screen {
 		rowY += 30;
 
 		for (String name : this.config.healItemNames) {
-			this.addRenderableWidget(new CheckboxRowWidget(x, rowY, width, 16, name,
+			addScrollable(new CheckboxRowWidget(x, rowY, width, 16, name,
 					() -> !this.healUncheckedPending.contains(name),
 					() -> {
 						if (!this.healUncheckedPending.remove(name)) {
@@ -286,7 +245,7 @@ public class RavengardExtrasMenuScreen extends Screen {
 		}
 		rowY += 4;
 
-		this.addRenderableWidget(new PanelButtonWidget(x, rowY, 72, 20, "Save", this::saveHeal));
+		addScrollable(new PanelButtonWidget(x, rowY, 72, 20, "Save", this::saveHeal));
 		rowY += 24;
 		return rowY - y;
 	}
@@ -301,7 +260,7 @@ public class RavengardExtrasMenuScreen extends Screen {
 
 	private int buildGearRulesBody(int x, int y) {
 		int width = this.contentWidth - 28;
-		this.addRenderableWidget(new PanelButtonWidget(x, y, Math.min(width, 160), 20, "Open Rule Editor",
+		addScrollable(new PanelButtonWidget(x, y, Math.min(width, 160), 20, "Open Rule Editor",
 				() -> Minecraft.getInstance().gui.setScreen(new com.ravengardextras.gearrules.ui.GearRulesScreen(this))));
 		return 24;
 	}
@@ -335,7 +294,7 @@ public class RavengardExtrasMenuScreen extends Screen {
 		for (int color : PRESET_COLORS) {
 			ColorSwatchButton swatch = new ColorSwatchButton(startX, y, size, color, onPick);
 			swatch.setSelected(color == currentColor);
-			this.addRenderableWidget(swatch);
+			addScrollable(swatch);
 			startX += spacing;
 		}
 	}
@@ -365,19 +324,11 @@ public class RavengardExtrasMenuScreen extends Screen {
 			cursorX += this.font.width(letter);
 		}
 
-		if (this.activeTab == DashboardTab.HIGHLIGHTERS && this.expandedCards.contains("gear")) {
-			long[] clamped = gearClampedThresholds();
-			for (int tier = 0; tier < 3; tier++) {
-				String range = tier == 2 ? clamped[tier] + "+" : clamped[tier] + " – " + (clamped[tier + 1] - 1);
-				EditBox box = this.gearThresholdBoxes[tier];
-				graphics.text(this.font, range, box.getX() + 120, box.getY() + 6, DashboardColors.TEXT_MUTED);
-			}
-		}
-
 		if (this.activeTab == DashboardTab.PARTY && this.expandedCards.contains("ping")) {
 			String[] lines = pingInstructionLines();
+			int shift = this.scrollViewTop - this.scroll.offset();
 			for (int i = 0; i < lines.length; i++) {
-				graphics.text(this.font, lines[i], this.pingColorPreviewX, this.pingColorPreviewY - (lines.length - i) * 10 - 6,
+				graphics.text(this.font, lines[i], this.pingColorPreviewX, this.pingColorPreviewY + shift - (lines.length - i) * 10 - 6,
 						DashboardColors.TEXT_MUTED);
 			}
 
@@ -387,17 +338,12 @@ public class RavengardExtrasMenuScreen extends Screen {
 				int color = PingColors.preview(name);
 				String label = "Your ping color:";
 				int labelX = this.pingColorPreviewX;
-				int labelY = this.pingColorPreviewY + 4;
+				int labelY = this.pingColorPreviewY + shift + 4;
 				graphics.text(this.font, label, labelX, labelY, DashboardColors.TEXT_MUTED);
 				int swatchX = labelX + this.font.width(label) + 6;
 				graphics.fill(swatchX, labelY - 1, swatchX + 10, labelY + 9, 0xFFFFFFFF);
 				graphics.fill(swatchX + 1, labelY, swatchX + 9, labelY + 8, color);
 			}
-		}
-
-		if (!this.statusError.isEmpty()) {
-			int ex = this.guiX + this.guiWidth / 2 - this.font.width(this.statusError) / 2;
-			graphics.text(this.font, this.statusError, ex, this.guiY + this.guiHeight - 54, DashboardColors.TEXT_WARNING);
 		}
 
 		drawCredit(graphics, this.guiX, this.guiY, x1, y1);

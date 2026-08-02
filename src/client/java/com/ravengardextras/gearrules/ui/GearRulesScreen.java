@@ -4,6 +4,7 @@ import com.ravengardextras.RavengardExtrasClient;
 import com.ravengardextras.dashboard.CheckboxRowWidget;
 import com.ravengardextras.dashboard.DashboardColors;
 import com.ravengardextras.dashboard.PanelButtonWidget;
+import com.ravengardextras.dashboard.ScrollState;
 import com.ravengardextras.dashboard.TabButtonWidget;
 import com.ravengardextras.gearrules.GearCard;
 import com.ravengardextras.gearrules.GearClass;
@@ -13,6 +14,7 @@ import com.ravengardextras.gearrules.GearPreset;
 import com.ravengardextras.gearrules.GearRulesConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
@@ -27,7 +29,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** Experimental: up to 4 preset tabs, each holding its own reorderable highlight-rule cards. */
+/**
+ * Up to 4 preset tabs, each holding its own reorderable highlight-rule cards. The card list
+ * is scrollable: it's built at natural (0-based) y, then shifted into the viewport and clipped
+ * to whole rows in {@link #layoutScroll} - same approach as the main dashboard screen.
+ */
 public class GearRulesScreen extends Screen {
 	private static final int SWATCH_SIZE = 20;
 
@@ -37,10 +43,10 @@ public class GearRulesScreen extends Screen {
 	private final Set<String> expandedCards = new HashSet<>();
 	private final Map<String, String> minText = new HashMap<>();
 	private final Map<String, String> maxText = new HashMap<>();
-	/** {card, x, y} - drawn live every frame in extractRenderState() so wheel drags update instantly. */
+	/** {card, x, y} in natural (pre-scroll) coordinates - shifted to screen space at draw time. */
 	private final List<Object[]> headerSwatches = new ArrayList<>();
 	private final List<Object[]> labelDraws = new ArrayList<>();
-	/** {x, y, width} rows to underline between conditions inside an expanded card body. */
+	/** {x, y, width} in natural coordinates, underlined between conditions inside an expanded card body. */
 	private final List<int[]> conditionDividers = new ArrayList<>();
 
 	/** uiId of the condition whose param dropdown is currently open, or null. */
@@ -48,6 +54,11 @@ public class GearRulesScreen extends Screen {
 	/** Bottom-left of the param button that opened the dropdown, so the list appears right under it. */
 	private int dropdownAnchorX, dropdownAnchorY;
 	private int[] dropdownBox;
+
+	// --- Scrollable card list ---
+	private final ScrollState scroll = new ScrollState();
+	private final List<AbstractWidget> scrollableWidgets = new ArrayList<>();
+	private int scrollViewTop, scrollViewBottom;
 
 	private int guiX, guiY, guiWidth, guiHeight;
 	private int contentX, contentY, contentWidth;
@@ -70,6 +81,8 @@ public class GearRulesScreen extends Screen {
 		this.contentX = this.guiX + 18;
 		this.contentY = this.guiY + 66;
 		this.contentWidth = this.guiWidth - 36;
+		this.scrollViewTop = this.contentY + 26;
+		this.scrollViewBottom = this.guiY + this.guiHeight - 40;
 		rebuild();
 	}
 
@@ -78,6 +91,7 @@ public class GearRulesScreen extends Screen {
 		this.headerSwatches.clear();
 		this.labelDraws.clear();
 		this.conditionDividers.clear();
+		this.scrollableWidgets.clear();
 
 		if (this.openDropdownFor != null) {
 			buildDropdownOverlay();
@@ -91,7 +105,7 @@ public class GearRulesScreen extends Screen {
 				"Enable in-game (the open tab above is what applies)",
 				() -> this.config.enabled, () -> { this.config.enabled = !this.config.enabled; this.config.save(); rebuild(); }));
 
-		int y = this.contentY + 26;
+		int y = 0;
 		for (int i = 0; i < preset.cards.size(); i++) {
 			GearCard card = preset.cards.get(i);
 			y = buildCardHeader(preset, card, i, y);
@@ -103,16 +117,49 @@ public class GearRulesScreen extends Screen {
 			y += 10;
 		}
 
-		this.addRenderableWidget(new PanelButtonWidget(this.contentX, y, 100, 20, "+ New Card", () -> {
+		addScrollable(new PanelButtonWidget(this.contentX, y, 100, 20, "+ New Card", () -> {
 			GearCard card = new GearCard();
 			preset.cards.add(card);
 			this.config.save();
 			this.expandedCards.add(card.id);
 			rebuild();
 		}));
+		y += 24;
+
+		layoutScroll(y);
 
 		this.addRenderableWidget(new PanelButtonWidget(this.guiX + this.guiWidth / 2 - 40, this.guiY + this.guiHeight - 30, 80, 20,
 				"Close", this::onClose));
+	}
+
+	/** Adds a widget built at natural (0-based) y to the scrollable content set instead of directly to the screen. */
+	private <T extends AbstractWidget> T addScrollable(T widget) {
+		this.scrollableWidgets.add(widget);
+		this.addRenderableWidget(widget);
+		return widget;
+	}
+
+	/** Shifts every scrollable widget (and the manually-drawn decorations) from natural y into the viewport. */
+	private void layoutScroll(int contentHeight) {
+		int viewportHeight = this.scrollViewBottom - this.scrollViewTop;
+		this.scroll.clamp(contentHeight, viewportHeight);
+		int shift = this.scrollViewTop - this.scroll.offset();
+		for (AbstractWidget widget : this.scrollableWidgets) {
+			int newY = widget.getY() + shift;
+			widget.setY(newY);
+			widget.visible = newY >= this.scrollViewTop && newY + widget.getHeight() <= this.scrollViewBottom;
+		}
+	}
+
+	private int scrollShift() {
+		return this.scrollViewTop - this.scroll.offset();
+	}
+
+	@Override
+	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+		this.scroll.nudge(scrollY);
+		rebuild();
+		return true;
 	}
 
 	// ============================== Param dropdown overlay ==============================
@@ -183,6 +230,7 @@ public class GearRulesScreen extends Screen {
 					preset.name, () -> this.config.activePresetIndex == index, () -> {
 				this.config.activePresetIndex = index;
 				this.config.save();
+				this.scroll.reset();
 				rebuild();
 			}));
 		}
@@ -200,7 +248,7 @@ public class GearRulesScreen extends Screen {
 		String label = card.name + "  (" + card.conditions.size() + " condition" + (card.conditions.size() == 1 ? "" : "s") + ")"
 				+ (expanded ? "  ▲" : "  ▼");
 		int labelX = x + SWATCH_SIZE + 8;
-		this.addRenderableWidget(new PanelButtonWidget(labelX, y, this.contentWidth - (labelX - x) - 96, rowHeight, label, () -> {
+		addScrollable(new PanelButtonWidget(labelX, y, this.contentWidth - (labelX - x) - 96, rowHeight, label, () -> {
 			if (!this.expandedCards.remove(card.id)) {
 				this.expandedCards.add(card.id);
 			}
@@ -208,9 +256,9 @@ public class GearRulesScreen extends Screen {
 		}));
 
 		int bx = x + this.contentWidth - 90;
-		this.addRenderableWidget(new ArrowButtonWidget(bx, y, rowHeight, true, () -> moveCard(preset, index, -1)));
-		this.addRenderableWidget(new ArrowButtonWidget(bx + rowHeight + 4, y, rowHeight, false, () -> moveCard(preset, index, 1)));
-		this.addRenderableWidget(new RemoveButtonWidget(bx + (rowHeight + 4) * 2, y, rowHeight, () -> {
+		addScrollable(new ArrowButtonWidget(bx, y, rowHeight, true, () -> moveCard(preset, index, -1)));
+		addScrollable(new ArrowButtonWidget(bx + rowHeight + 4, y, rowHeight, false, () -> moveCard(preset, index, 1)));
+		addScrollable(new RemoveButtonWidget(bx + (rowHeight + 4) * 2, y, rowHeight, () -> {
 			preset.cards.remove(card);
 			this.expandedCards.remove(card.id);
 			this.config.save();
@@ -232,7 +280,6 @@ public class GearRulesScreen extends Screen {
 	}
 
 	private int buildCardBody(GearCard card, int y) {
-		int startY = y;
 		int leftX = this.contentX + 14;
 		int leftWidth = (int) (this.contentWidth * 0.56) - 20;
 		int rightX = this.contentX + (int) (this.contentWidth * 0.56);
@@ -240,7 +287,7 @@ public class GearRulesScreen extends Screen {
 		EditBox nameBox = new EditBox(this.font, leftX, y, leftWidth, 16, Component.literal("Card name"));
 		nameBox.setValue(card.name);
 		nameBox.setResponder(text -> { card.name = text; this.config.save(); });
-		this.addRenderableWidget(nameBox);
+		addScrollable(nameBox);
 		int condY = y + 24;
 
 		List<GearCondition> conditions = new ArrayList<>(card.conditions);
@@ -254,7 +301,7 @@ public class GearRulesScreen extends Screen {
 		}
 
 		condY += conditions.isEmpty() ? 0 : 6;
-		this.addRenderableWidget(new PanelButtonWidget(leftX, condY, leftWidth, 18, "+ Add Parameter", () -> {
+		addScrollable(new PanelButtonWidget(leftX, condY, leftWidth, 18, "+ Add Parameter", () -> {
 			card.conditions.add(new GearCondition());
 			this.config.save();
 			rebuild();
@@ -266,10 +313,10 @@ public class GearRulesScreen extends Screen {
 			card.color = argb;
 			card.rainbow = false;
 		});
-		this.addRenderableWidget(wheel);
+		addScrollable(wheel);
 		rightY += 64 + 10;
 
-		this.addRenderableWidget(new TabButtonWidget(rightX, rightY, 110, 18, "RGB (Rainbow)",
+		addScrollable(new TabButtonWidget(rightX, rightY, 110, 18, "RGB (Rainbow)",
 				() -> card.rainbow, () -> { card.rainbow = !card.rainbow; this.config.save(); rebuild(); }));
 		rightY += 26;
 
@@ -280,17 +327,17 @@ public class GearRulesScreen extends Screen {
 		int rowHeight = 20;
 		int paramWidth = 150;
 
-		this.addRenderableWidget(new PanelButtonWidget(x, y, paramWidth, rowHeight, condition.param.label + "  ▾", () -> {
+		addScrollable(new PanelButtonWidget(x, y, paramWidth, rowHeight, condition.param.label + "  ▾", () -> {
 			this.openDropdownFor = condition.uiId;
 			this.dropdownAnchorX = x;
-			this.dropdownAnchorY = y + rowHeight + 4;
+			this.dropdownAnchorY = y + scrollShift() + rowHeight + 4;
 			rebuild();
 		}));
 
 		int removeX = x + width - rowHeight;
 
 		if (condition.param == GearParam.CLASS) {
-			this.addRenderableWidget(new RemoveButtonWidget(removeX, y, rowHeight, () -> {
+			addScrollable(new RemoveButtonWidget(removeX, y, rowHeight, () -> {
 				card.conditions.remove(condition);
 				this.config.save();
 				rebuild();
@@ -301,7 +348,7 @@ public class GearRulesScreen extends Screen {
 			int chipWidth = (width - chipGap * (GearClass.values().length - 1)) / GearClass.values().length;
 			int chipX = x;
 			for (GearClass gearClass : GearClass.values()) {
-				this.addRenderableWidget(new TabButtonWidget(chipX, chipY, chipWidth, rowHeight, gearClass.label,
+				addScrollable(new TabButtonWidget(chipX, chipY, chipWidth, rowHeight, gearClass.label,
 						() -> condition.classes.contains(gearClass), () -> {
 					if (!condition.classes.remove(gearClass)) {
 						condition.classes.add(gearClass);
@@ -328,7 +375,7 @@ public class GearRulesScreen extends Screen {
 				// keep typing, don't clobber the last valid value
 			}
 		});
-		this.addRenderableWidget(minBox);
+		addScrollable(minBox);
 
 		int afterMinX = afterParamX + 50 + 20;
 		if (condition.param.isRange()) {
@@ -350,10 +397,10 @@ public class GearRulesScreen extends Screen {
 					// keep typing
 				}
 			});
-			this.addRenderableWidget(maxBox);
+			addScrollable(maxBox);
 		}
 
-		this.addRenderableWidget(new RemoveButtonWidget(removeX, y, rowHeight, () -> {
+		addScrollable(new RemoveButtonWidget(removeX, y, rowHeight, () -> {
 			card.conditions.remove(condition);
 			this.config.save();
 			rebuild();
@@ -420,32 +467,35 @@ public class GearRulesScreen extends Screen {
 
 		super.extractRenderState(graphics, mouseX, mouseY, partialTick);
 
+		int shift = scrollShift();
 		for (int[] divider : this.conditionDividers) {
-			graphics.fill(divider[0], divider[1], divider[0] + divider[2], divider[1] + 1, DashboardColors.BORDER);
+			int dy = divider[1] + shift;
+			if (dy >= this.scrollViewTop && dy < this.scrollViewBottom) {
+				graphics.fill(divider[0], dy, divider[0] + divider[2], dy + 1, DashboardColors.BORDER);
+			}
 		}
 
 		for (Object[] entry : this.headerSwatches) {
 			GearCard card = (GearCard) entry[0];
 			int sx = (int) entry[1];
-			int sy = (int) entry[2];
+			int sy = (int) entry[2] + shift;
+			if (sy < this.scrollViewTop || sy + SWATCH_SIZE > this.scrollViewBottom) {
+				continue;
+			}
 			int color = card.rainbow ? rainbowPreviewColor() : card.color;
 			graphics.fill(sx, sy, sx + SWATCH_SIZE, sy + SWATCH_SIZE, 0xFFFFFFFF);
 			graphics.fill(sx + 1, sy + 1, sx + SWATCH_SIZE - 1, sy + SWATCH_SIZE - 1, color);
 		}
 		for (Object[] draw : this.labelDraws) {
-			graphics.text(this.font, (String) draw[0], (int) draw[1], (int) draw[2], (int) draw[3]);
+			int dy = (int) draw[2] + shift;
+			if (dy >= this.scrollViewTop - 10 && dy <= this.scrollViewBottom) {
+				graphics.text(this.font, (String) draw[0], (int) draw[1], dy, (int) draw[3]);
+			}
 		}
 
-		String title = "Gear Highlighter 2";
+		String title = "Gear Highlighter";
 		int titleWidth = this.font.width(title);
-		graphics.text(this.font, title, this.guiX + this.guiWidth / 2 - titleWidth / 2, this.guiY + 8, DashboardColors.TEXT_PRIMARY);
-
-		String tag = "(experimental)";
-		graphics.pose().pushMatrix();
-		graphics.pose().translate(this.guiX + this.guiWidth / 2 - (this.font.width(tag) * 0.75F) / 2, this.guiY + 20);
-		graphics.pose().scale(0.75F, 0.75F);
-		graphics.text(this.font, tag, 0, 0, 0xFFFF5555);
-		graphics.pose().popMatrix();
+		graphics.text(this.font, title, this.guiX + this.guiWidth / 2 - titleWidth / 2, this.guiY + 12, DashboardColors.TEXT_PRIMARY);
 	}
 
 	private static int rainbowPreviewColor() {

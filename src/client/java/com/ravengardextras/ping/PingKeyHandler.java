@@ -23,7 +23,8 @@ import java.util.Optional;
 /**
  * Turns ping-key presses into local pings plus party chat broadcasts.
  *
- * <p>The ping key places a temporary ping. The mark key: a tap places a permanent
+ * <p>The ping key places a temporary ping; double-tapping it upgrades that ping into
+ * a red flashing alert. The mark key: a tap places a permanent
  * mark (up to {@link PingManager#MAX_MARKS}; the oldest is replaced past that),
  * marking an already-marked block toggles it off, and holding the key clears ALL
  * your marks - no menus, so it stays fast under pressure. If the crosshair is on
@@ -40,6 +41,13 @@ public final class PingKeyHandler {
 	private static long holdStartMillis;
 	private static boolean holdConsumed;
 
+	/** Two ping-key taps at most this far apart upgrade the ping into an alert. */
+	private static final long DOUBLE_TAP_WINDOW_MILLIS = 400;
+
+	private static final DoubleTap PING_DOUBLE_TAP = new DoubleTap(DOUBLE_TAP_WINDOW_MILLIS);
+	/** Whether the previous ping-key tap actually placed a ping (not cooldown/range blocked). */
+	private static boolean lastTapPinged;
+
 	private PingKeyHandler() {
 	}
 
@@ -52,17 +60,53 @@ public final class PingKeyHandler {
 		if (player == null || client.level == null) {
 			return;
 		}
+		long now = System.currentTimeMillis();
+		// Only a tap that actually placed a ping can be upgraded; a blocked first
+		// tap falls through to the normal (cooldown-checked) path, so double-tap
+		// spam can't flood party chat.
+		if (PING_DOUBLE_TAP.tap(now) && lastTapPinged) {
+			upgradeToAlert(client, config, player, now);
+			return;
+		}
 		HitResult hit = player.pick(config.maxPingDistance, 1.0F, false);
 		if (!(hit instanceof BlockHitResult blockHit) || hit.getType() != HitResult.Type.BLOCK) {
 			client.gui.hud.setOverlayMessage(Component.literal("No block in ping range"), false);
+			lastTapPinged = false;
 			return;
 		}
 		if (onCooldown(client)) {
+			lastTapPinged = false;
 			return;
 		}
+		lastTapPinged = true;
 		BlockPos pos = blockHit.getBlockPos();
 		PingManager.addPing(player.getName().getString(), pos);
 		broadcast(client, config, PingMessage.formatPing(pos.getX(), pos.getY(), pos.getZ()));
+	}
+
+	/**
+	 * Second tap of a double-tap: replaces the just-placed ping with an alert at
+	 * the block now under the crosshair (or the ping's own spot if that pick
+	 * fails). Exempt from the cooldown check - the first tap just passed it -
+	 * but refreshes the timestamp so a double-tap still counts as one use.
+	 */
+	private static void upgradeToAlert(Minecraft client, PingConfig config, LocalPlayer player, long now) {
+		String name = player.getName().getString();
+		HitResult hit = player.pick(config.maxPingDistance, 1.0F, false);
+		BlockPos pos;
+		if (hit instanceof BlockHitResult blockHit && hit.getType() == HitResult.Type.BLOCK) {
+			pos = blockHit.getBlockPos();
+		} else {
+			PingManager.Ping existing = PingManager.pingOf(name);
+			if (existing == null) {
+				client.gui.hud.setOverlayMessage(Component.literal("No block in ping range"), false);
+				return;
+			}
+			pos = existing.pos();
+		}
+		lastPingMillis = now;
+		PingManager.addAlert(name, pos);
+		broadcast(client, config, PingMessage.formatAlert(pos.getX(), pos.getY(), pos.getZ()));
 	}
 
 	/**

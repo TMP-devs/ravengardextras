@@ -2,6 +2,9 @@ package com.ravengardextras;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.ravengardextras.cooldown.CooldownDebugOverlay;
+import com.ravengardextras.debug.CooldownScan;
+import com.ravengardextras.debug.DebugFile;
+import com.ravengardextras.debug.ScoreboardDump;
 import com.ravengardextras.gearhighlighter.GearHighlighterConfig;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -53,10 +56,23 @@ public class RavengardExtrasClient implements ClientModInitializer {
 						"[RGE] cooldown debug: " + (CooldownDebugOverlay.enabled ? "ON" : "OFF")));
 				return 1;
 			};
+			// Silent, file-only dumps to <game dir>/ravengardextras/debug.txt for Cmd+F reading.
+			com.mojang.brigadier.Command<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> dumpScoreboard = ctx -> {
+				DebugFile.section("SCOREBOARD", ScoreboardDump.sidebarLines());
+				return 1;
+			};
+			com.mojang.brigadier.Command<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> dumpCooldowns = ctx -> {
+				DebugFile.section("COOLDOWNS", CooldownScan.lines());
+				return 1;
+			};
 			dispatcher.register(literal("ravengardextras").executes(openMenu)
-					.then(literal("debug").executes(toggleDebug)));
+					.then(literal("debug").executes(toggleDebug)
+							.then(literal("scoreboard").executes(dumpScoreboard))
+							.then(literal("cooldowns").executes(dumpCooldowns))));
 			dispatcher.register(literal("rge").executes(openMenu)
-					.then(literal("debug").executes(toggleDebug)));
+					.then(literal("debug").executes(toggleDebug)
+							.then(literal("scoreboard").executes(dumpScoreboard))
+							.then(literal("cooldowns").executes(dumpCooldowns))));
 		});
 	}
 }

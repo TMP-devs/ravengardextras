@@ -11,8 +11,13 @@ import java.util.regex.Pattern;
 
 /** Reads the "N Crowns" line out of an item's lore. Plain string scan, no NBT writes, no network traffic. */
 public final class CrownParser {
+	/**
+	 * {@code Crowns?} because an item worth exactly one reads "1 Crown", not "1 Crowns" —
+	 * requiring the plural valued those items at zero. Case-insensitive, and {@code \b} so an
+	 * unrelated word merely starting with "Crown" is not read as a value.
+	 */
 	private static final Pattern CROWNS_PATTERN =
-			Pattern.compile("([\\d,]+(?:\\.\\d+)?)\\s*([kKmM]?)\\s*Crowns");
+			Pattern.compile("([\\d,]+(?:\\.\\d+)?)\\s*([kKmM]?)\\s*Crowns?\\b", Pattern.CASE_INSENSITIVE);
 
 	private CrownParser() {
 	}
@@ -36,7 +41,8 @@ public final class CrownParser {
 		return -1;
 	}
 
-	private static long parseLine(String text) {
+	/** Package-private so the pure string logic can be unit-tested without an ItemStack. */
+	static long parseLine(String text) {
 		Matcher matcher = CROWNS_PATTERN.matcher(text);
 		if (!matcher.find()) {
 			return -1;

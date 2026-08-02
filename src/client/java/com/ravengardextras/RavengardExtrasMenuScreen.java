@@ -46,7 +46,7 @@ public class RavengardExtrasMenuScreen extends Screen {
 	private final GearHighlighterConfig config = RavengardExtrasClient.CONFIG;
 	private final PingConfig pingConfig = RavengardExtrasClient.PING_CONFIG;
 
-	private DashboardTab activeTab = DashboardTab.HIGHLIGHTERS;
+	private DashboardTab activeTab = DashboardTab.DUNGEON;
 	private final Set<String> expandedCards = new HashSet<>();
 
 	// --- Heal Highlighter pending state ---
@@ -185,7 +185,7 @@ public class RavengardExtrasMenuScreen extends Screen {
 	private List<CardDef> cardsFor(DashboardTab tab) {
 		List<CardDef> cards = new ArrayList<>();
 		switch (tab) {
-			case HIGHLIGHTERS -> {
+			case DUNGEON -> {
 				cards.add(new CardDef("gearrules", "Gear Highlighter", "Build your own stat/class highlight cards",
 						new ItemStack(Items.GOLDEN_HELMET),
 						() -> RavengardExtrasClient.GEAR_RULES.enabled,
@@ -195,6 +195,16 @@ public class RavengardExtrasMenuScreen extends Screen {
 						new ItemStack(Items.GOLDEN_APPLE),
 						() -> this.config.healEnabled, v -> { this.config.healEnabled = v; this.config.save(); },
 						this::buildHealBody));
+				cards.add(new CardDef("crowncalc", "Crown Calculator", "Net Crowns gained per run",
+						new ItemStack(Items.GOLD_INGOT),
+						() -> RavengardExtrasClient.RUN_TOOLS_CONFIG.crownCalcEnabled,
+						v -> { RavengardExtrasClient.RUN_TOOLS_CONFIG.crownCalcEnabled = v; RavengardExtrasClient.RUN_TOOLS_CONFIG.save(); },
+						null));
+				cards.add(new CardDef("xpcalc", "XP Calculator", "Total XP earned per run",
+						new ItemStack(Items.EXPERIENCE_BOTTLE),
+						() -> RavengardExtrasClient.RUN_TOOLS_CONFIG.xpCalcEnabled,
+						v -> { RavengardExtrasClient.RUN_TOOLS_CONFIG.xpCalcEnabled = v; RavengardExtrasClient.RUN_TOOLS_CONFIG.save(); },
+						null));
 			}
 			case PARTY -> cards.add(new CardDef("ping", "Party Ping",
 					"Ping (" + RavengardExtrasClient.pingKeyName() + ") / mark loot (" + RavengardExtrasClient.markKeyName() + ")",

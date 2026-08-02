@@ -7,6 +7,10 @@ import com.ravengardextras.ping.PingChatListener;
 import com.ravengardextras.ping.PingConfig;
 import com.ravengardextras.ping.PingKeyHandler;
 import com.ravengardextras.ping.PingRenderer;
+import com.ravengardextras.runtools.RunChatListener;
+import com.ravengardextras.runtools.RunHudRenderer;
+import com.ravengardextras.runtools.RunToolsConfig;
+import com.ravengardextras.runtools.RunTracker;
 import com.ravengardextras.slotlocker.SlotLockerConfig;
 import com.ravengardextras.mixin.AbstractContainerScreenAccessor;
 import net.fabricmc.api.ClientModInitializer;
@@ -29,6 +33,8 @@ public class RavengardExtrasClient implements ClientModInitializer {
 	public static GearRulesConfig GEAR_RULES;
 	public static PingConfig PING_CONFIG;
 	public static SlotLockerConfig SLOT_LOCKER_CONFIG;
+	public static RunToolsConfig RUN_TOOLS_CONFIG;
+	public static RunTracker RUN_TRACKER;
 	/** Own section in the vanilla Controls screen; label comes from key.category.ravengardextras.main. */
 	private static final KeyMapping.Category KEY_CATEGORY =
 			KeyMapping.Category.register(Identifier.fromNamespaceAndPath("ravengardextras", "main"));
@@ -44,6 +50,10 @@ public class RavengardExtrasClient implements ClientModInitializer {
 		GEAR_RULES = GearRulesConfig.load();
 		PING_CONFIG = PingConfig.load();
 		SLOT_LOCKER_CONFIG = SlotLockerConfig.load();
+		RUN_TOOLS_CONFIG = RunToolsConfig.load();
+		RUN_TRACKER = new RunTracker(RUN_TOOLS_CONFIG);
+		RunChatListener.register(RUN_TRACKER, RUN_TOOLS_CONFIG);
+		RunHudRenderer.register(RUN_TRACKER, RUN_TOOLS_CONFIG);
 
 		openMenuKey = KeyMappingHelper.registerKeyMapping(
 				new KeyMapping("key.ravengardextras.open_menu", InputConstants.UNKNOWN.getValue(), KEY_CATEGORY));
@@ -76,6 +86,7 @@ public class RavengardExtrasClient implements ClientModInitializer {
 		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			RUN_TRACKER.tick(client);
 			while (openMenuKey.consumeClick()) {
 				menuOpenRequested = true;
 			}

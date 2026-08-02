@@ -2,30 +2,71 @@ package com.ravengardextras;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.ravengardextras.gearhighlighter.GearHighlighterConfig;
+import com.ravengardextras.ping.PingChatListener;
+import com.ravengardextras.ping.PingConfig;
+import com.ravengardextras.ping.PingKeyHandler;
+import com.ravengardextras.ping.PingRenderer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.resources.Identifier;
 
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
 
 public class RavengardExtrasClient implements ClientModInitializer {
 	public static GearHighlighterConfig CONFIG;
+	public static PingConfig PING_CONFIG;
+	/** Own section in the vanilla Controls screen; label comes from key.category.ravengardextras.main. */
+	private static final KeyMapping.Category KEY_CATEGORY =
+			KeyMapping.Category.register(Identifier.fromNamespaceAndPath("ravengardextras", "main"));
 	private static KeyMapping openMenuKey;
+	private static KeyMapping pingKey;
+	private static KeyMapping markKey;
 	private static volatile boolean menuOpenRequested = false;
 
 	@Override
 	public void onInitializeClient() {
 		CONFIG = GearHighlighterConfig.load();
+		PING_CONFIG = PingConfig.load();
 
 		openMenuKey = KeyMappingHelper.registerKeyMapping(
-				new KeyMapping("key.ravengardextras.open_menu", InputConstants.UNKNOWN.getValue(), KeyMapping.Category.MISC));
+				new KeyMapping("key.ravengardextras.open_menu", InputConstants.UNKNOWN.getValue(), KEY_CATEGORY));
+		pingKey = KeyMappingHelper.registerKeyMapping(
+				new KeyMapping("key.ravengardextras.ping", InputConstants.KEY_Z, KEY_CATEGORY));
+		markKey = KeyMappingHelper.registerKeyMapping(
+				new KeyMapping("key.ravengardextras.mark", InputConstants.KEY_X, KEY_CATEGORY));
+
+		PingChatListener.register();
+		PingRenderer.register();
+
+		// Mark the hovered item while a chest/inventory GUI is open (keybinds don't
+		// fire in screens, so this listens to the screen's own key events).
+		ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
+			if (screen instanceof AbstractContainerScreen<?> containerScreen) {
+				ScreenKeyboardEvents.afterKeyPress(screen).register((scr, keyEvent) -> {
+					if (markKey.matches(keyEvent)) {
+						PingKeyHandler.markHoveredItem(client, containerScreen);
+					}
+				});
+			}
+		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			while (openMenuKey.consumeClick()) {
 				menuOpenRequested = true;
 			}
+			while (pingKey.consumeClick()) {
+				PingKeyHandler.onPingKey(client);
+			}
+			while (markKey.consumeClick()) {
+				// drained; the mark key is driven by held-state below (tap vs hold)
+			}
+			PingKeyHandler.tickMarkKey(client, markKey.isDown());
 			// Deferred to end-of-tick so a chat screen's own close (which happens
 			// right after a command is sent) can never race with and undo this.
 			if (menuOpenRequested) {
@@ -42,5 +83,15 @@ public class RavengardExtrasClient implements ClientModInitializer {
 			dispatcher.register(literal("ravengardextras").executes(openMenu));
 			dispatcher.register(literal("rge").executes(openMenu));
 		});
+	}
+
+	/** Current display name of the ping key (tracks rebinds), e.g. "Z". */
+	public static String pingKeyName() {
+		return pingKey != null ? pingKey.getTranslatedKeyMessage().getString() : "?";
+	}
+
+	/** Current display name of the mark key (tracks rebinds), e.g. "X". */
+	public static String markKeyName() {
+		return markKey != null ? markKey.getTranslatedKeyMessage().getString() : "?";
 	}
 }

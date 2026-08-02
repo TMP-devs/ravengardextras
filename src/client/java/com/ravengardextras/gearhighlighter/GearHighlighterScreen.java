@@ -153,7 +153,7 @@ public class GearHighlighterScreen extends Screen {
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
 		super.extractRenderState(graphics, mouseX, mouseY, partialTick);
 		int centerX = this.width / 2;
-		graphics.text(this.font, this.title, centerX - this.font.width(this.title) / 2, this.height / 2 - 130, 0xFFFFFF);
+		graphics.text(this.font, this.title, centerX - this.font.width(this.title) / 2, this.height / 2 - 130, 0xFFFFFFFF);
 
 		long[] clamped = readClampedThresholds();
 		for (int tier = 0; tier < TIER_COUNT; tier++) {
@@ -161,11 +161,11 @@ public class GearHighlighterScreen extends Screen {
 					? clamped[tier] + "+"
 					: clamped[tier] + " – " + (clamped[tier + 1] - 1);
 			int boxY = this.thresholdBoxes[tier].getY();
-			graphics.text(this.font, Component.literal(range), this.thresholdBoxes[tier].getX() + 120, boxY + 6, 0xAAAAAA);
+			graphics.text(this.font, Component.literal(range), this.thresholdBoxes[tier].getX() + 120, boxY + 6, 0xFFAAAAAA);
 		}
 
 		if (!this.errorMessage.isEmpty()) {
-			graphics.text(this.font, this.errorMessage, centerX - this.font.width(this.errorMessage) / 2, this.height / 2 + 100, 0xFF5555);
+			graphics.text(this.font, this.errorMessage, centerX - this.font.width(this.errorMessage) / 2, this.height / 2 + 100, 0xFFFF5555);
 		}
 	}
 

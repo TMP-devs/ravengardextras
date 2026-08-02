@@ -19,8 +19,16 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class PingManager {
 	public static final int MAX_MARKS = 5;
 
+	public enum Kind {
+		PING, MARK, ALERT
+	}
+
 	/** label is the item name shown instead of the sender, or null for a plain mark/ping. */
-	public record Ping(String sender, BlockPos pos, long createdAtMillis, boolean permanent, String label) {
+	public record Ping(String sender, BlockPos pos, long createdAtMillis, Kind kind, String label) {
+		/** Marks persist until cleared; pings and alerts expire on the temp timer. */
+		public boolean permanent() {
+			return kind == Kind.MARK;
+		}
 	}
 
 	private static final Map<String, Ping> PINGS = new ConcurrentHashMap<>();
@@ -29,12 +37,22 @@ public final class PingManager {
 	}
 
 	public static void addPing(String sender, BlockPos pos) {
-		PINGS.put(pingKey(sender), new Ping(sender, pos.immutable(), System.currentTimeMillis(), false, null));
+		PINGS.put(pingKey(sender), new Ping(sender, pos.immutable(), System.currentTimeMillis(), Kind.PING, null));
+	}
+
+	/** An alert shares the sender's single temporary-ping slot, replacing any ping there. */
+	public static void addAlert(String sender, BlockPos pos) {
+		PINGS.put(pingKey(sender), new Ping(sender, pos.immutable(), System.currentTimeMillis(), Kind.ALERT, null));
+	}
+
+	/** The sender's current temporary-slot entry (ping or alert), or null. */
+	public static Ping pingOf(String sender) {
+		return PINGS.get(pingKey(sender));
 	}
 
 	public static void addMark(String sender, BlockPos pos, String label) {
 		String cleanLabel = label == null || label.isBlank() ? null : label;
-		PINGS.put(markKey(sender, pos), new Ping(sender, pos.immutable(), System.currentTimeMillis(), true, cleanLabel));
+		PINGS.put(markKey(sender, pos), new Ping(sender, pos.immutable(), System.currentTimeMillis(), Kind.MARK, cleanLabel));
 		List<Ping> marks = marksOf(sender);
 		while (marks.size() > MAX_MARKS) {
 			Ping oldest = marks.stream().min(Comparator.comparingLong(Ping::createdAtMillis)).orElseThrow();

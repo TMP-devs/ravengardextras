@@ -65,6 +65,10 @@ public final class PingChatListener {
 				reconcileOwnEcho(sender, pos, false);
 				PingManager.addPing(sender, pos);
 			}
+			case ALERT -> {
+				reconcileOwnEcho(sender, pos, false);
+				PingManager.addAlert(sender, pos);
+			}
 		}
 	}
 

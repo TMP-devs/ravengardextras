@@ -1,6 +1,7 @@
 package com.ravengardextras;
 
 import com.ravengardextras.gearhighlighter.GearHighlighterScreen;
+import com.ravengardextras.ping.PingScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -10,7 +11,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
-/** Feature list for the mod, styled as a small panel. Currently just Gear Highlighter; more rows slot in later. */
+/** Feature list for the mod, styled as a small panel: one row per feature (Gear Highlighter, Party Ping). */
 public class RavengardExtrasMenuScreen extends Screen {
 	private static final int PANEL_WIDTH = 240;
 	private static final int PANEL_HEIGHT = 192;
@@ -42,6 +43,13 @@ public class RavengardExtrasMenuScreen extends Screen {
 				new ItemStack(Items.GOLDEN_HELMET),
 				() -> RavengardExtrasClient.CONFIG.enabled,
 				() -> Minecraft.getInstance().gui.setScreen(new GearHighlighterScreen(this, RavengardExtrasClient.CONFIG))));
+		rowY += 44;
+
+		this.addRenderableWidget(new FeatureButton(px + 12, rowY, PANEL_WIDTH - 24, 36,
+				"Party Ping", "Ping (" + RavengardExtrasClient.pingKeyName() + ") / mark loot (" + RavengardExtrasClient.markKeyName() + ")",
+				new ItemStack(Items.ENDER_EYE),
+				() -> RavengardExtrasClient.PING_CONFIG.enabled,
+				() -> Minecraft.getInstance().gui.setScreen(new PingScreen(this, RavengardExtrasClient.PING_CONFIG))));
 		rowY += 44;
 
 		this.comingSoonY = rowY;
@@ -106,7 +114,7 @@ public class RavengardExtrasMenuScreen extends Screen {
 		String prefix = "a mod by ";
 		String name1 = "chrrisk";
 		String separator = " & ";
-		String name2 = "scrolls";
+		String name2 = "Scrolls";
 		float scale = 0.65F;
 		int fullWidth = this.font.width(prefix) + this.font.width(name1) + this.font.width(separator) + this.font.width(name2);
 		int scaledWidth = (int) (fullWidth * scale);

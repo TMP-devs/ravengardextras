@@ -118,7 +118,7 @@ public class RavengardExtrasMenuScreen extends Screen {
 		int y = this.contentY;
 		for (CardDef card : cardsFor(this.activeTab)) {
 			FeatureCardWidget header = new FeatureCardWidget(this.contentX, y, this.contentWidth, 44,
-					card.label, card.description, card.icon, card.enabledSupplier, card.toggleAction,
+					card.label, card.description, card.badge, card.icon, card.enabledSupplier, card.toggleAction,
 					card.bodyBuilder != null, () -> this.expandedCards.contains(card.id), () -> toggleExpand(card.id));
 			this.addRenderableWidget(header);
 			y += 44;
@@ -158,7 +158,7 @@ public class RavengardExtrasMenuScreen extends Screen {
 		List<CardDef> cards = new ArrayList<>();
 		switch (tab) {
 			case HIGHLIGHTERS -> {
-				cards.add(new CardDef("gear", "Gear Highlighter", "Outline gear by Crown value",
+				cards.add(new CardDef("gear", "Gear Highlighter", "Outline gear by Crown value", "(superseded)",
 						new ItemStack(Items.GOLDEN_HELMET),
 						() -> this.config.enabled, v -> { this.config.enabled = v; this.config.save(); },
 						this::buildGearBody));
@@ -408,7 +408,7 @@ public class RavengardExtrasMenuScreen extends Screen {
 		String name1 = "chrrisk";
 		String separator = " & ";
 		String name2 = "Scrolls";
-		float scale = 0.65F;
+		float scale = 0.72F;
 		int fullWidth = this.font.width(prefix) + this.font.width(name1) + this.font.width(separator) + this.font.width(name2);
 		int scaledWidth = (int) (fullWidth * scale);
 		int drawX = x1 - scaledWidth - 8;

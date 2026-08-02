@@ -42,7 +42,9 @@ public class TabButtonWidget extends AbstractWidget {
 		Font font = Minecraft.getInstance().font;
 		int tx = x0 + (this.getWidth() - font.width(this.getMessage())) / 2;
 		int ty = y0 + (this.getHeight() - font.lineHeight) / 2;
-		graphics.text(font, this.getMessage(), tx, ty, textColor);
+		// The active tab's near-black text picks up a same-color drop shadow that smears
+		// into it on the light accent background, so drop the shadow only in that state.
+		graphics.text(font, this.getMessage(), tx, ty, textColor, !active);
 	}
 
 	@Override

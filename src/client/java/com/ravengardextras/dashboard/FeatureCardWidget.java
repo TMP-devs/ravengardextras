@@ -25,6 +25,7 @@ public class FeatureCardWidget extends AbstractWidget {
 
 	private final ItemStack icon;
 	private final String description;
+	private final String badge;
 	private final BooleanSupplier enabledSupplier;
 	private final Consumer<Boolean> toggleAction;
 	private final boolean expandable;
@@ -34,8 +35,17 @@ public class FeatureCardWidget extends AbstractWidget {
 	public FeatureCardWidget(int x, int y, int width, int height, String label, String description,
 	                          ItemStack icon, BooleanSupplier enabledSupplier, Consumer<Boolean> toggleAction,
 	                          boolean expandable, BooleanSupplier expandedSupplier, Runnable onHeaderClick) {
+		this(x, y, width, height, label, description, null, icon, enabledSupplier, toggleAction,
+				expandable, expandedSupplier, onHeaderClick);
+	}
+
+	/** Same as above but with a small colored badge (e.g. "experimental") drawn after the label. */
+	public FeatureCardWidget(int x, int y, int width, int height, String label, String description, String badge,
+	                          ItemStack icon, BooleanSupplier enabledSupplier, Consumer<Boolean> toggleAction,
+	                          boolean expandable, BooleanSupplier expandedSupplier, Runnable onHeaderClick) {
 		super(x, y, width, height, Component.literal(label));
 		this.description = description;
+		this.badge = badge;
 		this.icon = icon;
 		this.enabledSupplier = enabledSupplier;
 		this.toggleAction = toggleAction;
@@ -85,6 +95,14 @@ public class FeatureCardWidget extends AbstractWidget {
 		int textX = iconX + 24;
 		graphics.text(font, this.getMessage(), textX, y0 + 8, DashboardColors.TEXT_PRIMARY);
 		graphics.text(font, this.description, textX, y0 + 19, DashboardColors.TEXT_MUTED);
+		if (this.badge != null) {
+			int badgeX = textX + font.width(this.getMessage()) + 6;
+			graphics.pose().pushMatrix();
+			graphics.pose().translate(badgeX, y0 + 9);
+			graphics.pose().scale(0.75F, 0.75F);
+			graphics.text(font, this.badge, 0, 0, 0xFFFF5555);
+			graphics.pose().popMatrix();
+		}
 
 		if (this.expandable) {
 			drawChevron(graphics, x0 + 6, y0 + this.getHeight() / 2, this.expandedSupplier.getAsBoolean());

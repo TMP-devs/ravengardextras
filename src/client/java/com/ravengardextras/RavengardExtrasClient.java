@@ -66,14 +66,20 @@ public class RavengardExtrasClient implements ClientModInitializer {
 				DebugFile.section("COOLDOWNS", CooldownScan.lines());
 				return 1;
 			};
+			com.mojang.brigadier.Command<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> dumpText = ctx -> {
+				DebugFile.section("TEXT SNAPSHOT", com.ravengardextras.debug.HudText.snapshot());
+				return 1;
+			};
 			dispatcher.register(literal("ravengardextras").executes(openMenu)
 					.then(literal("debug").executes(toggleDebug)
 							.then(literal("scoreboard").executes(dumpScoreboard))
-							.then(literal("cooldowns").executes(dumpCooldowns))));
+							.then(literal("cooldowns").executes(dumpCooldowns))
+							.then(literal("text").executes(dumpText))));
 			dispatcher.register(literal("rge").executes(openMenu)
 					.then(literal("debug").executes(toggleDebug)
 							.then(literal("scoreboard").executes(dumpScoreboard))
-							.then(literal("cooldowns").executes(dumpCooldowns))));
+							.then(literal("cooldowns").executes(dumpCooldowns))
+							.then(literal("text").executes(dumpText))));
 		});
 	}
 }

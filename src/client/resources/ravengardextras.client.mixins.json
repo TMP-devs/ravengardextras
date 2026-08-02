@@ -5,7 +5,10 @@
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"AbstractContainerScreenMixin",
-		"ItemCooldownsMixin"
+		"BossHealthOverlayAccessor",
+		"HudAccessor",
+		"ItemCooldownsMixin",
+		"PlayerTabOverlayAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

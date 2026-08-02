@@ -22,6 +22,18 @@ public abstract class AbstractContainerScreenMixin extends Screen {
 		super(title);
 	}
 
+	// Runs before the item icon is queued so the heal wash paints underneath it instead of covering the icon.
+	@Inject(method = "extractSlot", at = @At("HEAD"))
+	private void ravengardextras$healBackground(GuiGraphicsExtractor guiGraphics, Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
+		ItemStack stack = slot.getItem();
+		if (stack.isEmpty()) {
+			return;
+		}
+		if (RavengardExtrasClient.CONFIG.isHealItem(stack.getHoverName().getString())) {
+			guiGraphics.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, RavengardExtrasClient.CONFIG.healColor);
+		}
+	}
+
 	@Inject(method = "extractSlot", at = @At("TAIL"))
 	private void ravengardextras$extractSlot(GuiGraphicsExtractor guiGraphics, Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
 		ItemStack stack = slot.getItem();
@@ -29,7 +41,6 @@ public abstract class AbstractContainerScreenMixin extends Screen {
 			return;
 		}
 		if (RavengardExtrasClient.CONFIG.isHealItem(stack.getHoverName().getString())) {
-			guiGraphics.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, RavengardExtrasClient.CONFIG.healColor);
 			return;
 		}
 

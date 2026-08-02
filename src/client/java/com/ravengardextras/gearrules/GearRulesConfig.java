@@ -71,6 +71,27 @@ public class GearRulesConfig {
 			if (preset.name == null || preset.name.isBlank()) {
 				preset.name = "Preset";
 			}
+			for (GearCard card : preset.cards) {
+				migrateToGroups(card);
+			}
+		}
+	}
+
+	/** Cards saved before OR-groups existed have their conditions in the legacy flat {@code conditions} list. */
+	private static void migrateToGroups(GearCard card) {
+		if (card.groups == null) {
+			card.groups = new ArrayList<>();
+		}
+		int totalConditions = card.groups.stream().mapToInt(g -> g.conditions == null ? 0 : g.conditions.size()).sum();
+		if (totalConditions == 0 && card.conditions != null && !card.conditions.isEmpty()) {
+			card.groups.clear();
+			GearConditionGroup group = new GearConditionGroup();
+			group.conditions = new ArrayList<>(card.conditions);
+			card.groups.add(group);
+		}
+		card.conditions = new ArrayList<>();
+		if (card.groups.isEmpty()) {
+			card.groups.add(new GearConditionGroup());
 		}
 	}
 
@@ -82,7 +103,7 @@ public class GearRulesConfig {
 		condition.param = GearParam.CROWN_VALUE;
 		condition.min = 75;
 		condition.max = null;
-		card.conditions.add(condition);
+		card.groups.get(0).conditions.add(condition);
 		return card;
 	}
 

@@ -23,8 +23,10 @@ public class GearHighlighterConfig {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static final Path PATH = FabricLoader.getInstance().getConfigDir().resolve("ravengardextras.json");
 
+	private static final int OLD_DEFAULT_HEAL_COLOR = 0x5000FF00;
+
 	public boolean healEnabled = true;
-	public int healColor = 0x5000FF00; // translucent green wash, overrides crown tier when it matches
+	public int healColor = 0x405CAD5C; // muted, translucent green wash, drawn behind the item icon
 	public List<String> healItemNames = List.of("Bandage", "Basic Bandage", "Apple", "Health Potion");
 	/** Names (from healItemNames) the user has unchecked in the dashboard; empty = everything highlights. */
 	public Set<String> healUncheckedItems = new HashSet<>();
@@ -45,6 +47,10 @@ public class GearHighlighterConfig {
 					} else if (!cfg.healItemNames.contains("Basic Bandage")) {
 						cfg.healItemNames = new ArrayList<>(cfg.healItemNames);
 						cfg.healItemNames.add("Basic Bandage");
+						cfg.save();
+					}
+					if (cfg.healColor == OLD_DEFAULT_HEAL_COLOR) {
+						cfg.healColor = new GearHighlighterConfig().healColor;
 						cfg.save();
 					}
 					return cfg;

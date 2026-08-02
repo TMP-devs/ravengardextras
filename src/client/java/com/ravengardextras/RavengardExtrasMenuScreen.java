@@ -215,6 +215,18 @@ public class RavengardExtrasMenuScreen extends Screen {
 						v -> { this.config.healAmountEnabled = v; this.config.save(); },
 						null));
 			}
+			case RUN -> {
+				cards.add(new CardDef("crowncalc", "Crown Calculator", "Net Crowns gained per run",
+						new ItemStack(Items.GOLD_INGOT),
+						() -> RavengardExtrasClient.RUN_TOOLS_CONFIG.crownCalcEnabled,
+						v -> { RavengardExtrasClient.RUN_TOOLS_CONFIG.crownCalcEnabled = v; RavengardExtrasClient.RUN_TOOLS_CONFIG.save(); },
+						null));
+				cards.add(new CardDef("xpcalc", "XP Calculator", "Total XP earned per run", "experimental",
+						new ItemStack(Items.EXPERIENCE_BOTTLE),
+						() -> RavengardExtrasClient.RUN_TOOLS_CONFIG.xpCalcEnabled,
+						v -> { RavengardExtrasClient.RUN_TOOLS_CONFIG.xpCalcEnabled = v; RavengardExtrasClient.RUN_TOOLS_CONFIG.save(); },
+						null));
+			}
 		}
 		return cards;
 	}

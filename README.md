@@ -2,7 +2,7 @@
 
 A lightweight QOL mod for Fabric 26.2.
 
-Open the menu with `/ravengardextras` or `/rge` - a tabbed dashboard covering Highlighters, Party, and Inventory.
+Open the menu with `/ravengardextras` or `/rge` - a tabbed dashboard covering Highlighters, Party, Inventory, and Run.
 
 ## Features
 
@@ -40,6 +40,17 @@ Lock slots so you can't accidentally move or drop what's in them.
 - `L` on a hovered slot to lock/unlock it
 - Locked slots block clicks, drags, throws, and hotbar swaps
 - Small lock icon + chime, persists across sessions
+
+### 👑 Run Tools
+
+Per-run Crown and XP tallies on the HUD, summarised in chat when you escape.
+
+- **Crown Calculator** - net Crowns gained this run. A snapshot of your inventory is taken
+  as you enter, so the gear you brought never counts and swapping a 5-Crown chestplate for
+  a 10-Crown one reads `+5`, not `+10`. Worn armor and offhand are included
+- **XP Calculator** *(experimental)* - totals XP gains from chat and the action bar
+- Consumables you brought in count against the total when used, since the figure is net
+  inventory value rather than loot collected
 
 ## Requirements
 

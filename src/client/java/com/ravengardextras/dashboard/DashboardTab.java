@@ -4,7 +4,8 @@ package com.ravengardextras.dashboard;
 public enum DashboardTab {
 	HIGHLIGHTERS("Highlighters"),
 	PARTY("Party"),
-	INVENTORY("Inventory");
+	INVENTORY("Inventory"),
+	RUN("Run");
 
 	public final String label;
 

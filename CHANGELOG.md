@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3
+
+### 👑 Run Tools
+A new **Run** tab with per-run tallies, shown on the HUD and summarised in chat when you escape.
+
+- **Crown Calculator** - net Crowns gained, measured against a snapshot taken as you enter, so the gear you walked in with never counts and swapping an item up is worth the difference
+- **XP Calculator** *(experimental)* - totals XP gains from chat and the action bar, reset each run
+
 ## 0.2
 
 ### 🖥️ New Dashboard

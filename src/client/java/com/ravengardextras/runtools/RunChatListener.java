@@ -5,6 +5,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Single entry point for reading the chat and action bar. Every incoming line is
@@ -33,7 +35,7 @@ public final class RunChatListener {
 		// The player's own "<name> has escaped with …!" line is the last line of the escape
 		// block (after the final +EXP), so summarising here captures the complete totals.
 		if (isOwnEscapeLine(plain)) {
-			tracker.reportEscape();
+			tracker.reportEscape(parseEscapedCrowns(plain));
 		}
 
 		if (config.xpCalcEnabled) {
@@ -55,4 +57,23 @@ public final class RunChatListener {
 		String name = client.player.getName().getString();
 		return !name.isEmpty() && plain.contains(name);
 	}
+
+	/** "…has escaped with ♛136!" → 136. The crown glyph and any commas are skipped. Returns -1 if unparseable. */
+	static long parseEscapedCrowns(String plain) {
+		if (plain == null) {
+			return -1;
+		}
+		Matcher matcher = ESCAPED_WITH.matcher(plain);
+		if (!matcher.find()) {
+			return -1;
+		}
+		try {
+			return Long.parseLong(matcher.group(1).replace(",", ""));
+		} catch (NumberFormatException e) {
+			return -1;
+		}
+	}
+
+	private static final Pattern ESCAPED_WITH =
+			Pattern.compile("escaped with\\D*?([\\d,]+)", Pattern.CASE_INSENSITIVE);
 }

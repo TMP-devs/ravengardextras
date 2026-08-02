@@ -75,8 +75,11 @@ public final class RunTracker {
 	 * Called when the local player's "has escaped with…" line appears — the last line of
 	 * the escape block, after all XP has landed. Prints our calculated run totals into chat
 	 * right below the server's escape message. Fires at most once per run.
+	 *
+	 * @param escapedWithCrowns the raw "♛N" total read off the escape line (includes the
+	 *                          crowns you entered with), or -1 if it could not be parsed.
 	 */
-	public void reportEscape() {
+	public void reportEscape(long escapedWithCrowns) {
 		if (!runActive || escapeReported) {
 			return;
 		}
@@ -88,6 +91,9 @@ public final class RunTracker {
 		var chat = client.gui.hud.getChat();
 		if (config.crownCalcEnabled) {
 			chat.addClientSystemMessage(Component.literal("Calculated Crowns Collected: " + String.format("%,d", netCrowns())));
+			if (escapedWithCrowns >= 0) {
+				chat.addClientSystemMessage(Component.literal("Escaped with (total): " + String.format("%,d", escapedWithCrowns) + " Crowns"));
+			}
 		}
 		if (config.xpCalcEnabled) {
 			chat.addClientSystemMessage(Component.literal("Calculated EXP earned: " + String.format("%,d", runXp)));

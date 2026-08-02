@@ -166,12 +166,20 @@ public class RavengardExtrasMenuScreen extends Screen {
 					new ItemStack(Items.ENDER_EYE),
 					() -> this.pingConfig.enabled, v -> { this.pingConfig.enabled = v; this.pingConfig.save(); },
 					this::buildPingBody));
-			case INVENTORY -> cards.add(new CardDef("slotlock", "Slot Locking",
-					"Lock a slot with " + RavengardExtrasClient.lockSlotKeyName() + " to stop moving it",
-					new ItemStack(Items.SHIELD),
-					() -> RavengardExtrasClient.SLOT_LOCKER_CONFIG.enabled,
-					v -> { RavengardExtrasClient.SLOT_LOCKER_CONFIG.enabled = v; RavengardExtrasClient.SLOT_LOCKER_CONFIG.save(); },
-					null));
+			case INVENTORY -> {
+				cards.add(new CardDef("slotlock", "Slot Locking",
+						"Lock a slot with " + RavengardExtrasClient.lockSlotKeyName() + " to stop moving it",
+						new ItemStack(Items.SHIELD),
+						() -> RavengardExtrasClient.SLOT_LOCKER_CONFIG.enabled,
+						v -> { RavengardExtrasClient.SLOT_LOCKER_CONFIG.enabled = v; RavengardExtrasClient.SLOT_LOCKER_CONFIG.save(); },
+						null));
+				cards.add(new CardDef("healamount", "Heal Amount Display",
+						"Show HP healed on the item instead of stack count",
+						new ItemStack(Items.GOLDEN_APPLE),
+						() -> this.config.healAmountEnabled,
+						v -> { this.config.healAmountEnabled = v; this.config.save(); },
+						null));
+			}
 		}
 		return cards;
 	}

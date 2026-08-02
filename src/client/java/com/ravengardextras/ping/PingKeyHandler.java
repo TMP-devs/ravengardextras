@@ -1,6 +1,7 @@
 package com.ravengardextras.ping;
 
 import com.ravengardextras.RavengardExtrasClient;
+import com.ravengardextras.gearhighlighter.HealParser;
 import com.ravengardextras.mixin.AbstractContainerScreenAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -12,6 +13,7 @@ import net.minecraft.network.protocol.game.ServerboundChatCommandPacket;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -154,7 +156,7 @@ public final class PingKeyHandler {
 		if (onCooldown(client)) {
 			return;
 		}
-		String label = slot.getItem().getHoverName().getString();
+		String label = labelFor(slot.getItem());
 		BlockPos pos = player.blockPosition();
 
 		String name = player.getName().getString();
@@ -189,7 +191,7 @@ public final class PingKeyHandler {
 		ItemEntity item = pickItem(player, blockHit ? hit.getLocation() : null, config.maxPingDistance);
 		if (item != null) {
 			pos = item.blockPosition();
-			label = item.getItem().getHoverName().getString();
+			label = labelFor(item.getItem());
 		} else if (blockHit) {
 			pos = ((BlockHitResult) hit).getBlockPos();
 		} else {
@@ -206,6 +208,13 @@ public final class PingKeyHandler {
 		}
 		PingManager.addMark(name, pos, label);
 		broadcast(client, config, PingMessage.formatMark(pos.getX(), pos.getY(), pos.getZ(), label));
+	}
+
+	/** Item name, plus " +N" if it's a healing item with a parseable HP amount in its lore. */
+	private static String labelFor(ItemStack stack) {
+		String name = stack.getHoverName().getString();
+		long heal = HealParser.findHeal(stack);
+		return heal >= 0 ? name + " +" + heal : name;
 	}
 
 	private static boolean onCooldown(Minecraft client) {

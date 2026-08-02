@@ -10,6 +10,7 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -32,9 +33,12 @@ public class GearHighlighterConfig {
 
 	public boolean healEnabled = true;
 	public int healColor = 0x5000FF00; // translucent green wash, overrides crown tier when it matches
-	public List<String> healItemNames = List.of("Bandage", "Apple", "Health Potion");
+	public List<String> healItemNames = List.of("Bandage", "Basic Bandage", "Apple", "Health Potion");
 	/** Names (from healItemNames) the user has unchecked in the dashboard; empty = everything highlights. */
 	public Set<String> healUncheckedItems = new HashSet<>();
+
+	/** Replaces a healing item's stack-count corner with its HP amount (e.g. "120") everywhere it's rendered. */
+	public boolean healAmountEnabled = true;
 
 	public static GearHighlighterConfig load() {
 		if (Files.exists(PATH)) {
@@ -43,6 +47,13 @@ public class GearHighlighterConfig {
 				if (cfg != null) {
 					if (cfg.healUncheckedItems == null) {
 						cfg.healUncheckedItems = new HashSet<>();
+					}
+					if (cfg.healItemNames == null) {
+						cfg.healItemNames = new ArrayList<>(List.of("Bandage", "Basic Bandage", "Apple", "Health Potion"));
+					} else if (!cfg.healItemNames.contains("Basic Bandage")) {
+						cfg.healItemNames = new ArrayList<>(cfg.healItemNames);
+						cfg.healItemNames.add("Basic Bandage");
+						cfg.save();
 					}
 					return cfg;
 				}

@@ -30,6 +30,7 @@ public final class RunTracker {
 	private long baselineCrowns = 0;
 	private long currentCrowns = 0;
 	private long runXp = 0;
+	private boolean escapeReported = false;
 
 	public RunTracker(RunToolsConfig config) {
 		this.config = config;
@@ -63,23 +64,34 @@ public final class RunTracker {
 		baselineCrowns = 0;
 		currentCrowns = 0;
 		runXp = 0;
+		escapeReported = false;
 	}
 
 	private void endRun(Minecraft client) {
 		runActive = false;
-		if (client.gui == null || client.gui.hud == null) {
+	}
+
+	/**
+	 * Called when the local player's "has escaped with…" line appears — the last line of
+	 * the escape block, after all XP has landed. Prints our calculated run totals into chat
+	 * right below the server's escape message. Fires at most once per run.
+	 */
+	public void reportEscape() {
+		if (!runActive || escapeReported) {
 			return;
 		}
-		// The HUD hides when the run ends, so surface the final tally in the action bar
-		// — this is the "what did I exfil with" number.
-		StringBuilder summary = new StringBuilder("Run complete:");
+		escapeReported = true;
+		Minecraft client = Minecraft.getInstance();
+		if (client.gui == null || client.gui.hud == null || client.gui.hud.getChat() == null) {
+			return;
+		}
+		var chat = client.gui.hud.getChat();
 		if (config.crownCalcEnabled) {
-			summary.append("  ").append(formatSigned(netCrowns())).append(" Crowns");
+			chat.addClientSystemMessage(Component.literal("Calculated Crowns Collected: " + String.format("%,d", netCrowns())));
 		}
 		if (config.xpCalcEnabled) {
-			summary.append("  ").append(formatSigned(runXp)).append(" XP");
+			chat.addClientSystemMessage(Component.literal("Calculated EXP earned: " + String.format("%,d", runXp)));
 		}
-		client.gui.hud.setOverlayMessage(Component.literal(summary.toString()), false);
 	}
 
 	/** Feed an XP gain parsed from chat. Only counts while a run is active. */

@@ -15,8 +15,21 @@ Highlighter: **Crown Calculator** and **XP Calculator**.
   Drop it / stash it in a chest → back toward **0**. Swap for something worse → goes
   **negative**. Exactly the behaviour you described.
 - A Crown lore value is multiplied by stack size, so five 10-Crown potions = 50.
-- Shows top-left while in a run; when you leave, the final tally is printed once in
-  the action bar ("Run complete: +N Crowns  +M XP") — that's your exfil number.
+
+### HUD + escape summary (updated per feedback)
+- The live counters ("Calculated Crowns" / "Calculated EXP") now sit in the
+  upper-right, roughly where the server's empty info box is, right-aligned with a text
+  shadow and **no background panel**. Position is a fraction of the screen
+  (`RIGHT_FRAC` / `TOP_FRAC` in `RunHudRenderer`) — tell me to nudge it if it's off.
+- When you escape, two lines are injected into chat right after the server's escape
+  message:
+  ```
+  Calculated Crowns Collected: <net>
+  Calculated EXP earned: <total>
+  ```
+  The trigger is your own `<name> has escaped with …!` line, which lands *after* the
+  final `+EXP` line — so the EXP total is complete (triggering on "You have escaped!"
+  would have missed the portal-escape XP).
 
 **Assumption to check:** "in a run" = the sidebar scoreboard objective name starts
 with `dungeon` (hub is `hub_sb`). This is the same signal the Room Navigator uses,

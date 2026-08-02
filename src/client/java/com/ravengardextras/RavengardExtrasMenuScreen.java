@@ -167,7 +167,7 @@ public class RavengardExtrasMenuScreen extends Screen {
 						() -> RavengardExtrasClient.GEAR_RULES.enabled,
 						v -> { RavengardExtrasClient.GEAR_RULES.enabled = v; RavengardExtrasClient.GEAR_RULES.save(); },
 						this::buildGearRulesBody));
-				cards.add(new CardDef("heal", "Heal Highlighter", "Tint healing items green",
+				cards.add(new CardDef("heal", "Heal Highlighter", "Tint healing items with your chosen color",
 						new ItemStack(Items.GOLDEN_APPLE),
 						() -> this.config.healEnabled, v -> { this.config.healEnabled = v; this.config.save(); },
 						this::buildHealBody));

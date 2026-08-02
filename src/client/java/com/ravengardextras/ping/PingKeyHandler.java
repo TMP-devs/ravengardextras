@@ -136,7 +136,7 @@ public final class PingKeyHandler {
 		}
 	}
 
-	/** Marks the item hovered in a container GUI, at the container the player is looking at. */
+	/** Marks the item hovered in a container GUI, at the player's own position (not wherever they're looking). */
 	public static void markHoveredItem(Minecraft client, AbstractContainerScreen<?> screen) {
 		PingConfig config = RavengardExtrasClient.PING_CONFIG;
 		if (!config.enabled) {
@@ -155,12 +155,7 @@ public final class PingKeyHandler {
 			return;
 		}
 		String label = slot.getItem().getHoverName().getString();
-		// The camera still points at the container the player just opened; fall back
-		// to the player's own position if nothing is in reach.
-		HitResult hit = player.pick(config.maxPingDistance, 1.0F, false);
-		BlockPos pos = hit instanceof BlockHitResult blockHit && hit.getType() == HitResult.Type.BLOCK
-				? blockHit.getBlockPos()
-				: player.blockPosition();
+		BlockPos pos = player.blockPosition();
 
 		String name = player.getName().getString();
 		PingManager.addMark(name, pos, label);

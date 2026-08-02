@@ -31,6 +31,10 @@ public abstract class AbstractContainerScreenMixin extends Screen {
 		if (stack.isEmpty()) {
 			return;
 		}
+		if (RavengardExtrasClient.CONFIG.isHealItem(stack.getHoverName().getString())) {
+			guiGraphics.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, RavengardExtrasClient.CONFIG.healColor);
+			return;
+		}
 		long crowns = CrownParser.findCrowns(stack);
 		if (crowns < 0) {
 			return;

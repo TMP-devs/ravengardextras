@@ -2,10 +2,9 @@ package com.ravengardextras.dashboard;
 
 /** Feature groupings shown as tabs across the top of the dashboard. */
 public enum DashboardTab {
-	HIGHLIGHTERS("Highlighters"),
+	DUNGEON("Dungeon Utils"),
 	PARTY("Party"),
-	INVENTORY("Inventory"),
-	RUN("Run");
+	INVENTORY("Inventory");
 
 	public final String label;
 

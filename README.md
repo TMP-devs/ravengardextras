@@ -2,7 +2,7 @@
 
 A lightweight QOL mod for Fabric 26.2.
 
-Open the menu with `/ravengardextras` or `/rge` - a tabbed dashboard covering Highlighters, Party, Inventory, and Run.
+Open the menu with `/ravengardextras` or `/rge` - a tabbed dashboard covering Dungeon Utils, Party, and Inventory.
 
 ## Features
 

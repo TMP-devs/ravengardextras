@@ -1,6 +1,7 @@
 package com.ravengardextras;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import com.ravengardextras.devtools.ItemDataDumpButton;
 import com.ravengardextras.gearhighlighter.GearHighlighterConfig;
 import com.ravengardextras.ping.PingChatListener;
 import com.ravengardextras.ping.PingConfig;
@@ -58,6 +59,9 @@ public class RavengardExtrasClient implements ClientModInitializer {
 		// fire in screens, so this listens to the screen's own key events).
 		ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
 			if (screen instanceof AbstractContainerScreen<?> containerScreen) {
+				// DEV ONLY: dumps every visible item's id + data components to clipboard.
+				net.fabricmc.fabric.api.client.screen.v1.Screens.getWidgets(screen)
+						.add(new ItemDataDumpButton(2, 2, containerScreen));
 				ScreenKeyboardEvents.afterKeyPress(screen).register((scr, keyEvent) -> {
 					if (markKey.matches(keyEvent)) {
 						PingKeyHandler.markHoveredItem(client, containerScreen);

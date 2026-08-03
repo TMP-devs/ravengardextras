@@ -94,10 +94,10 @@ public final class RunTracker {
 		}
 		escapeReported = true;
 		Minecraft client = Minecraft.getInstance();
-		if (client.gui == null || client.gui.hud == null || client.gui.hud.getChat() == null) {
+		if (client.gui == null || client.gui.getChat() == null) {
 			return;
 		}
-		var chat = client.gui.hud.getChat();
+		var chat = client.gui.getChat();
 		if (config.crownCalcEnabled) {
 			chat.addClientSystemMessage(summaryLine("Crowns Collected: ", netCrowns(), RunToolsColors.CROWN));
 		}

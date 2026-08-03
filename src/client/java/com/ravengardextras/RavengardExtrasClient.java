@@ -101,7 +101,7 @@ public class RavengardExtrasClient implements ClientModInitializer {
 			// right after a command is sent) can never race with and undo this.
 			if (menuOpenRequested) {
 				menuOpenRequested = false;
-				client.gui.setScreen(new RavengardExtrasMenuScreen(null));
+				client.setScreen(new RavengardExtrasMenuScreen(null));
 			}
 		});
 

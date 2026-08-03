@@ -113,7 +113,7 @@ public final class PingRenderer {
 			poseStack.scale(labelScale, labelScale, labelScale);
 			context.submitNodeCollector().submitNameTag(
 					poseStack, new Vec3(0.0, (HALF_HEIGHT * scale) / labelScale - 0.2, 0.0), 0, label,
-					true, LightCoordsUtil.FULL_BRIGHT, camera);
+					true, LightCoordsUtil.FULL_BRIGHT, distance * distance, camera);
 			poseStack.popPose();
 
 			poseStack.scale(scale, scale, scale);

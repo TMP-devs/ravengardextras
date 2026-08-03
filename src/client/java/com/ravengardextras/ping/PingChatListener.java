@@ -30,6 +30,11 @@ public final class PingChatListener {
 				handle(message, null);
 			}
 		});
+		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+			client.gui.getChat().addClientSystemMessage(Component.literal("[RGE] ").withColor(0xFF9B7FE8)
+					.append(Component.literal("Built for the latest Minecraft release — running on an older version may cause bugs or missing features.")
+							.withColor(0xFFAAAAAA)));
+		});
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
 			PingManager.clear();
 			PingColors.reset();
@@ -45,7 +50,7 @@ public final class PingChatListener {
 		}
 		String plain = message.getString().replaceAll("§.", "");
 		if (PartyStatus.observe(plain, System.currentTimeMillis())) {
-			Minecraft.getInstance().gui.hud.setOverlayMessage(
+			Minecraft.getInstance().gui.setOverlayMessage(
 					Component.literal("No party - pings are now just for you"), false);
 		}
 		PingMessage.Parsed parsed = PingMessage.parse(message.getString());

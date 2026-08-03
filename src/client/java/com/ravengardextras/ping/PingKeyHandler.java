@@ -74,7 +74,7 @@ public final class PingKeyHandler {
 		}
 		HitResult hit = player.pick(config.maxPingDistance, 1.0F, false);
 		if (!(hit instanceof BlockHitResult blockHit) || hit.getType() != HitResult.Type.BLOCK) {
-			client.gui.hud.setOverlayMessage(Component.literal("No block in ping range"), false);
+			client.gui.setOverlayMessage(Component.literal("No block in ping range"), false);
 			lastTapPinged = false;
 			return;
 		}
@@ -127,7 +127,7 @@ public final class PingKeyHandler {
 				holdConsumed = true;
 				clearAllMarks(client);
 			} else if (!holdConsumed && held >= 400) {
-				client.gui.hud.setOverlayMessage(Component.literal("Keep holding to clear your marks..."), false);
+				client.gui.setOverlayMessage(Component.literal("Keep holding to clear your marks..."), false);
 			}
 		} else if (holdStartMillis != 0) {
 			boolean tap = !holdConsumed;
@@ -150,7 +150,7 @@ public final class PingKeyHandler {
 		}
 		Slot slot = ((AbstractContainerScreenAccessor) screen).ravengardextras$getHoveredSlot();
 		if (slot == null || !slot.hasItem()) {
-			client.gui.hud.setOverlayMessage(Component.literal("Hover an item to mark it"), false);
+			client.gui.setOverlayMessage(Component.literal("Hover an item to mark it"), false);
 			return;
 		}
 		if (onCooldown(client)) {
@@ -195,7 +195,7 @@ public final class PingKeyHandler {
 		} else if (blockHit) {
 			pos = ((BlockHitResult) hit).getBlockPos();
 		} else {
-			client.gui.hud.setOverlayMessage(Component.literal("No block in ping range"), false);
+			client.gui.setOverlayMessage(Component.literal("No block in ping range"), false);
 			return;
 		}
 
@@ -220,7 +220,7 @@ public final class PingKeyHandler {
 	private static boolean onCooldown(Minecraft client) {
 		long now = System.currentTimeMillis();
 		if (now - lastPingMillis < COOLDOWN_MILLIS) {
-			client.gui.hud.setOverlayMessage(Component.literal("Ping on cooldown"), false);
+			client.gui.setOverlayMessage(Component.literal("Ping on cooldown"), false);
 			return true;
 		}
 		lastPingMillis = now;
@@ -280,12 +280,12 @@ public final class PingKeyHandler {
 		}
 		String name = player.getName().getString();
 		if (PingManager.marksOf(name).isEmpty()) {
-			client.gui.hud.setOverlayMessage(Component.literal("No marks to clear"), false);
+			client.gui.setOverlayMessage(Component.literal("No marks to clear"), false);
 			return;
 		}
 		PingManager.removeAllMarks(name);
 		broadcast(client, RavengardExtrasClient.PING_CONFIG, PingMessage.formatClearAllMarks());
-		client.gui.hud.setOverlayMessage(Component.literal("All marks cleared"), false);
+		client.gui.setOverlayMessage(Component.literal("All marks cleared"), false);
 	}
 
 	private static void clearMarkAt(Minecraft client, String name, BlockPos pos) {
@@ -294,7 +294,7 @@ public final class PingKeyHandler {
 		broadcast(client, RavengardExtrasClient.PING_CONFIG,
 				PingMessage.formatClearMark(pos.getX(), pos.getY(), pos.getZ()));
 		String what = mark != null && mark.label() != null ? mark.label() : "Mark";
-		client.gui.hud.setOverlayMessage(Component.literal(what + " cleared"), false);
+		client.gui.setOverlayMessage(Component.literal(what + " cleared"), false);
 	}
 
 	private static void broadcast(Minecraft client, PingConfig config, String message) {

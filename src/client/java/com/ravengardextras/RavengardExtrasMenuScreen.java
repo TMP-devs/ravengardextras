@@ -271,7 +271,7 @@ public class RavengardExtrasMenuScreen extends Screen {
 	private int buildGearRulesBody(int x, int y) {
 		int width = this.contentWidth - 28;
 		addScrollable(new PanelButtonWidget(x, y, Math.min(width, 160), 20, "Open Rule Editor",
-				() -> Minecraft.getInstance().gui.setScreen(new com.ravengardextras.gearrules.ui.GearRulesScreen(this))));
+				() -> Minecraft.getInstance().setScreen(new com.ravengardextras.gearrules.ui.GearRulesScreen(this))));
 		return 24;
 	}
 
@@ -402,6 +402,6 @@ public class RavengardExtrasMenuScreen extends Screen {
 
 	@Override
 	public void onClose() {
-		Minecraft.getInstance().gui.setScreen(this.parent);
+		Minecraft.getInstance().setScreen(this.parent);
 	}
 }

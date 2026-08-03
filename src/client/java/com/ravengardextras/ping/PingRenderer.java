@@ -209,9 +209,9 @@ public final class PingRenderer {
 	private static void quad(PoseStack.Pose pose, VertexConsumer buffer, int color,
 	                         float x1, float y1, float x2, float y2,
 	                         float x3, float y3, float x4, float y4) {
-		buffer.addVertex(pose, x1, y1, 0.0F).setColor(color);
-		buffer.addVertex(pose, x2, y2, 0.0F).setColor(color);
-		buffer.addVertex(pose, x3, y3, 0.0F).setColor(color);
-		buffer.addVertex(pose, x4, y4, 0.0F).setColor(color);
+		buffer.addVertex(pose, x1, y1, 0.0F).setColor(color).setLight(LightCoordsUtil.FULL_BRIGHT);
+		buffer.addVertex(pose, x2, y2, 0.0F).setColor(color).setLight(LightCoordsUtil.FULL_BRIGHT);
+		buffer.addVertex(pose, x3, y3, 0.0F).setColor(color).setLight(LightCoordsUtil.FULL_BRIGHT);
+		buffer.addVertex(pose, x4, y4, 0.0F).setColor(color).setLight(LightCoordsUtil.FULL_BRIGHT);
 	}
 }

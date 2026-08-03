@@ -32,7 +32,7 @@ public final class PingChatListener {
 		});
 		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
 			client.gui.getChat().addClientSystemMessage(Component.literal("[RGE] ").withColor(0xFF9B7FE8)
-					.append(Component.literal("Built for the latest Minecraft release — running on an older version may cause bugs or missing features.")
+					.append(Component.literal("Built for the latest Minecraft release. Running on an older version may cause bugs or missing features.")
 							.withColor(0xFFAAAAAA)));
 		});
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
